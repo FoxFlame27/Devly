@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("y5.theme");if(t==="paper"||t==="graphite")document.documentElement.setAttribute("data-theme",t);else t="graphite";document.documentElement.style.colorScheme=t==="paper"?"light":"dark";}catch(e){}`,
+            __html: `try{var t=localStorage.getItem("y5.theme");if(t==="paper"||t==="graphite")document.documentElement.setAttribute("data-theme",t);else t="paper";document.documentElement.style.colorScheme=t==="paper"?"light":"dark";}catch(e){}`,
           }}
         />
       </head>

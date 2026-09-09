@@ -15,9 +15,9 @@ export function applyTheme(id: ThemeId) {
 
 /** One button: switches between the dark (Graphite) and light (Paper) look. */
 export function ThemePicker() {
-  const [theme, setTheme] = useState<ThemeId>("graphite");
+  const [theme, setTheme] = useState<ThemeId>("paper");
   useEffect(() => {
-    const t = setTimeout(() => setTheme(document.documentElement.getAttribute("data-theme") === "paper" ? "paper" : "graphite"), 0);
+    const t = setTimeout(() => setTheme(document.documentElement.getAttribute("data-theme") === "graphite" ? "graphite" : "paper"), 0);
     return () => clearTimeout(t);
   }, []);
   const next: ThemeId = theme === "paper" ? "graphite" : "paper";

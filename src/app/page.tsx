@@ -3,16 +3,27 @@ import { listUserProjects } from "@/lib/projects/list";
 import { AppShell } from "@/components/AppShell";
 import { HomePrompt } from "@/components/HomePrompt";
 import { RecentProjects } from "@/components/HomeExtras";
+import { TopNav } from "@/components/TopNav";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const user = await getCurrentUser();
-  const projects = user ? await listUserProjects(user.id, 12) : [];
+  if (!user) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <TopNav />
+        <main className="flex flex-1 flex-col justify-center pb-24">
+          <HomePrompt user={null} />
+        </main>
+      </div>
+    );
+  }
+  const projects = await listUserProjects(user.id, 12);
   return (
-    <AppShell user={user ? toSafeUser(user) : null} projects={projects} active="home">
+    <AppShell user={toSafeUser(user)} projects={projects} active="home">
       <div className="flex flex-1 flex-col justify-center py-8">
-        <HomePrompt user={user ? toSafeUser(user) : null} />
+        <HomePrompt user={toSafeUser(user)} />
         <RecentProjects projects={projects} />
       </div>
     </AppShell>
