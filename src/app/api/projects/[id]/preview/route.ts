@@ -3,7 +3,7 @@ import { json, parseBody } from "@/lib/http";
 import { projectRoute } from "@/lib/api/project-route";
 import { ensureRunning, previewInfo, startPreview, stopPreview } from "@/lib/projects/preview";
 
-export const maxDuration = 600;
+export const maxDuration = 300;
 
 export const GET = projectRoute(async (_req, { project }) => json({ preview: previewInfo(project.id) }));
 

@@ -18,7 +18,7 @@ const schema = z.object({
   effort: z.string().max(10).optional().nullable(),
 });
 
-export const maxDuration = 900;
+export const maxDuration = 300;
 
 export const POST = projectRoute(async (req, { user, project }) => {
   enforceRateLimit(req, "chat", 30, 10 * 60 * 1000, user.id);

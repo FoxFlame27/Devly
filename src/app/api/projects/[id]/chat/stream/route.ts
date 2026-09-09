@@ -3,7 +3,7 @@ import { projectRoute } from "@/lib/api/project-route";
 import { channelInfo, subscribe } from "@/lib/agent/registry";
 import { encodeSse } from "@/lib/agent/events";
 
-export const maxDuration = 900;
+export const maxDuration = 300;
 
 /** Re-attaches to a run: replays everything so far, then streams live until it finishes. */
 export const GET = projectRoute(async (req, { project }) => {
