@@ -14,7 +14,7 @@ export function maskEmail(email: string) {
 }
 
 /** Creates a 6-digit code, emails it, and returns the challenge id (plus the code itself in dev/console mode). */
-export async function startChallenge(user: { id: string; email: string; name: string | null }): Promise<{ challengeId: string; devCode?: string }> {
+export async function startChallenge(user: { id: string; email: string; name: string | null }): Promise<{ challengeId: string; devCode?: string; devReason?: string }> {
   await db.loginChallenge.deleteMany({ where: { userId: user.id } });
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   const ch = await db.loginChallenge.create({ data: { userId: user.id, codeHash: hmac(`${user.id}:${code}`), expiresAt: new Date(Date.now() + CODE_TTL_MS) } });
@@ -33,14 +33,18 @@ export async function startChallenge(user: { id: string; email: string; name: st
     if (process.env.NODE_ENV !== "production") {
       // Local development: don't block on email delivery, show the code on screen instead.
       console.log(`\n[email] (fallback) code for ${user.email}: ${code}\n`);
-      return { challengeId: ch.id, devCode: code };
+      return {
+        challengeId: ch.id,
+        devCode: code,
+        devReason: testMode ? "Resend is in test mode: it only delivers to your own address until you verify a domain." : "The code email couldn't be sent on this computer.",
+      };
     }
     const msg = testMode
       ? "Sign-ups are temporarily limited while email delivery is being set up. Please try again later."
       : "We couldn't send the code to that email address right now. Please try again in a moment.";
     throw new HttpError(502, msg, "email_failed");
   }
-  return { challengeId: ch.id, ...(provider.name === "console" && process.env.NODE_ENV !== "production" ? { devCode: code } : {}) };
+  return { challengeId: ch.id, ...(provider.name === "console" && process.env.NODE_ENV !== "production" ? { devCode: code, devReason: "No email service is configured on this computer." } : {}) };
 }
 
 /** Verifies a code. Returns the user id on success. */

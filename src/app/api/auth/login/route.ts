@@ -23,7 +23,7 @@ export const POST = handler(async (req) => {
   if (emailVerificationEnabled()) {
     // Password is right: now prove the email. The session is only created after the code is verified.
     const ch = await startChallenge(user);
-    return json({ verify: { challengeId: ch.challengeId, email: maskEmail(user.email), devCode: ch.devCode } });
+    return json({ verify: { challengeId: ch.challengeId, email: maskEmail(user.email), devCode: ch.devCode, devReason: ch.devReason } });
   }
   await createSession(user.id, req.headers.get("user-agent"));
   return json({ user: toSafeUser(user) });

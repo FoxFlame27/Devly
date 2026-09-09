@@ -20,7 +20,7 @@ export const POST = handler(async (req) => {
   if (emailVerificationEnabled()) {
     try {
       const ch = await startChallenge(user);
-      return json({ verify: { challengeId: ch.challengeId, email: maskEmail(user.email), devCode: ch.devCode } }, { status: 201 });
+      return json({ verify: { challengeId: ch.challengeId, email: maskEmail(user.email), devCode: ch.devCode, devReason: ch.devReason } }, { status: 201 });
     } catch (e) {
       // The account can't be verified yet: remove it so the person can simply try again.
       await db.user.delete({ where: { id: user.id } }).catch(() => {});

@@ -6,7 +6,7 @@ import { api } from "@/lib/client/api";
 import { friendlyOtpError, getSupabase, supabaseConfigured } from "@/lib/client/supabase";
 import { Button, ErrorText, Field, inputClass, Logo } from "./ui";
 
-type Verify = { provider?: "supabase"; challengeId?: string; email: string; masked?: string; devCode?: string };
+type Verify = { provider?: "supabase"; challengeId?: string; email: string; masked?: string; devCode?: string; devReason?: string };
 
 const RESEND_COOLDOWN = 30;
 
@@ -115,7 +115,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           </p>
           {verify.devCode ? (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
-              No email service is set up yet, so here is your code: <span className="font-mono text-sm font-semibold">{verify.devCode}</span>
+              Local testing: {verify.devReason ?? "the code email wasn't sent."} Your code is <span className="font-mono text-sm font-semibold">{verify.devCode}</span>. This never shows on the live site.
             </p>
           ) : null}
           <Field label="Code">

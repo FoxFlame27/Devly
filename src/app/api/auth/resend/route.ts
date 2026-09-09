@@ -10,5 +10,5 @@ export const POST = handler(async (req) => {
   const ch = await db.loginChallenge.findUnique({ where: { id: body.challengeId }, include: { user: true } });
   if (!ch) throw new HttpError(400, "Please sign in again.", "challenge_expired");
   const next = await startChallenge(ch.user);
-  return json({ verify: { challengeId: next.challengeId, email: maskEmail(ch.user.email), devCode: next.devCode } });
+  return json({ verify: { challengeId: next.challengeId, email: maskEmail(ch.user.email), devCode: next.devCode, devReason: next.devReason } });
 });
