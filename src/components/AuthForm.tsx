@@ -16,7 +16,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [code, setCode] = useState("");
   const [verify, setVerify] = useState<Verify | null>(null);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("error") === "google" ? "Google sign-in didn't complete. Please try again." : null));
   const [info, setInfo] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const [googleBusy, setGoogleBusy] = useState(false);
@@ -24,10 +24,6 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/projects";
-
-  useEffect(() => {
-    if (params.get("error") === "google") setError("Google sign-in didn't complete. Please try again.");
-  }, [params]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
