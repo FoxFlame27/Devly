@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Button } from "../ui";
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace React.JSX {
     interface IntrinsicElements {
       "model-viewer": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & { src?: string; poster?: string; "camera-controls"?: boolean; "auto-rotate"?: boolean; "shadow-intensity"?: string; exposure?: string };
