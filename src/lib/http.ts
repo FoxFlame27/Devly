@@ -29,6 +29,10 @@ export function errorResponse(err: unknown) {
   // Database not reachable / misconfigured: say so instead of a bare 500 (details stay in the server log).
   const name = (err as { constructor?: { name?: string } })?.constructor?.name ?? "";
   const code = (err as { code?: string })?.code ?? "";
+  if (code === "P2021" || code === "P2022") {
+    console.error("[api] database tables missing", err);
+    return NextResponse.json({ error: "The database isn't set up yet (tables are missing). The site owner needs to run the database setup.", code: "database_not_setup" }, { status: 503 });
+  }
   if (name === "PrismaClientInitializationError" || /^P10(00|01|02|17)$/.test(code)) {
     console.error("[api] database unavailable", err);
     return NextResponse.json({ error: "The database isn't reachable right now. The site owner needs to check the DATABASE_URL setting.", code: "database_unavailable" }, { status: 503 });
