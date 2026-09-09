@@ -16,6 +16,8 @@ import { ConflictModal, HistoryModal, PublishModal } from "./Dialogs";
 import { SettingsPane } from "./SettingsPane";
 import { DataPane } from "./DataPane";
 import { AskPane } from "./AskPane";
+import { useGithub } from "@/lib/client/useGithub";
+import { GitBranch, Upload, Download } from "lucide-react";
 import { FileExplorer } from "./FileExplorer";
 import { CodeEditor } from "./CodeEditor";
 import { Terminal } from "./Terminal";
@@ -53,6 +55,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
   const [panelOpen, setPanelOpen] = useState(true);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "unsaved">("saved");
   const [history, setHistory] = useState(false);
+  const github = useGithub(project.id);
   const [limitOpen, setLimitOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState<{ url: string | null; error: string | null; details?: string | null } | null>(null);
@@ -205,6 +208,8 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
         ) : null}
         {rightTab === "settings" ? (
           <SettingsPane
+            github={github}
+            onFilesChanged={() => setFilesKey((k) => k + 1)}
             project={project}
             onProject={(patch) => setProject((p) => ({ ...p, ...patch }))}
             advanced={advanced}
@@ -258,6 +263,27 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
             <Button size="sm" variant="ghost" onClick={() => setPanelOpen((o) => !o)} title={panelOpen ? "Hide the side panel" : "Show the preview"}>
               {panelOpen ? "Hide preview" : "Show preview"}
             </Button>
+            {github.status?.repo ? (
+              <span className="flex items-center gap-0.5 rounded-full border border-line px-1" title={`GitHub: ${github.status.repo}`}>
+                <GitBranch size={13} className="ml-1 text-muted" />
+                <Button size="sm" variant="ghost" loading={github.busy === "push"} disabled={!!github.busy || chat.running} onClick={() => github.push()} title="Push all files to GitHub">
+                  <Upload size={13} /> Push
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  loading={github.busy === "pull"}
+                  disabled={!!github.busy || chat.running}
+                  onClick={() => {
+                    if (window.confirm("Pull replaces this project's files with the repository's files (a version is saved first). Continue?")) github.pull().then((ok) => ok && setFilesKey((k) => k + 1));
+                  }}
+                  title="Pull the latest files from GitHub"
+                >
+                  <Download size={13} /> Pull
+                </Button>
+              </span>
+            ) : null}
+            {github.message ? <span className={`max-w-[260px] truncate text-xs ${github.message.kind === "ok" ? "text-green-700" : "text-red-600"}`}>{github.message.text}</span> : null}
             <Button size="sm" variant="ghost" onClick={() => setHistory(true)}>
               History
             </Button>

@@ -44,6 +44,8 @@ model User {
   promptsUsed    Int       @default(0)
   promptLimit    Int       @default(10)
   unlimited      Boolean   @default(false)
+  /// Encrypted GitHub personal access token (for push/pull)
+  githubToken    String?
   unlimitedUntil DateTime?
   disabled       Boolean   @default(false)
   emailVerifiedAt DateTime?
@@ -96,6 +98,11 @@ model Project {
   /// { model?: string, effort?: string }
   settings      Json?
   publishedSlug String?   @unique
+  /// Connected GitHub repository, "owner/name"
+  githubRepo    String?
+  githubBranch  String?   @default("main")
+  githubLastSha String?
+  githubSyncedAt DateTime?
   publishedAt   DateTime?
   lastOpenedAt  DateTime  @default(now())
   createdAt     DateTime  @default(now())

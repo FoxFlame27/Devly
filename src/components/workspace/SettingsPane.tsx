@@ -5,10 +5,14 @@ import { api } from "@/lib/client/api";
 import type { EffortChoice, EffortOption, ModelOption, ProjectDetail } from "@/lib/client/types";
 import { Button, ErrorText, Field, inputClass } from "../ui";
 import { Trash2 } from "lucide-react";
+import { GithubSection } from "./GithubSection";
+import type { useGithub } from "@/lib/client/useGithub";
 
 type EnvRow = { key: string; preview: string; updatedAt: string };
 
 export type SettingsProps = {
+  github: ReturnType<typeof useGithub>;
+  onFilesChanged: () => void;
   project: ProjectDetail;
   onProject: (patch: Partial<ProjectDetail>) => void;
   advanced: boolean;
@@ -154,6 +158,9 @@ export function SettingsPane(p: SettingsProps) {
           </div>
         </Section>
 
+        <Section title="GitHub" text="Push this project to a repository, or pull changes made elsewhere.">
+          <GithubSection projectId={p.project.id} gh={p.github} onFilesChanged={p.onFilesChanged} />
+        </Section>
         <Section title="AI model" text="Which AI builds this project.">
           <Choice name="model" options={p.models} value={p.model} onChange={(m) => saveAI({ model: m })} />
         </Section>
