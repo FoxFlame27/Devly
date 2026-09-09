@@ -45,10 +45,12 @@ model User {
   unlimited      Boolean   @default(false)
   unlimitedUntil DateTime?
   disabled       Boolean   @default(false)
+  emailVerifiedAt DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
   sessions      Session[]
+  challenges    LoginChallenge[]
   projects      Project[]
   conversations Conversation[]
   usages        Usage[]
@@ -64,6 +66,20 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
   userAgent String?
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/// One-time email code sent at signup / login. Only the hash is stored.
+model LoginChallenge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([expiresAt])

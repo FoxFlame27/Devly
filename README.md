@@ -36,6 +36,7 @@ Seeded by `npm run db:seed` (values from `.env`):
 | Publishing | `src/lib/hosting/` | `HostingProvider` interface; `LocalHosting` builds in the sandbox and serves the static output under `/site/<slug>/` on a separate origin (`127.0.0.1` vs `localhost`) so published user code never shares the app's cookies. Set `SITE_URL` for a real second domain. |
 | Auth | `src/lib/auth/` | Scrypt password hashes, HMAC-hashed session tokens in an httpOnly SameSite cookie, Origin check on every mutating request (CSRF), rate limits on auth, chat, publish and code redemption. Ownership is checked server-side on every project route. |
 | Prompt limits | `src/lib/usage.ts` | 10 free prompts, enforced atomically in the database. A prompt is refunded if the AI provider fails before doing work. Access codes are stored as HMAC hashes; each code can add prompts, unlock unlimited use, expire, and cap redemptions. |
+| Email codes | `src/lib/auth/challenge.ts`, `src/lib/email/` | Signup and login send a 6-digit code (Resend when `RESEND_API_KEY` is set; otherwise the code is printed to the server log and shown on screen in development). Codes are stored hashed, expire after 10 minutes, and allow 5 attempts. Set `EMAIL_VERIFY=false` to turn this off. |
 | Admin | `/admin` | Users, projects, usage, access codes, system status. Role is enforced by `requireAdmin()` on every admin API. |
 
 ## Modes
