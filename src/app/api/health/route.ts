@@ -35,7 +35,12 @@ export async function GET() {
       database = `ok (${users} users)`;
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      database = /does not exist|relation/i.test(msg) ? "connected, but tables are missing: run `npx prisma db push` against this database" : `cannot connect: ${msg.split("\n")[0].slice(0, 160)}`;
+      const code = (e as { code?: string })?.code;
+      const first = msg.split("\n").map((l) => l.trim()).filter((l) => l && !/^Invalid `|^prisma\./.test(l))[0] ?? msg.slice(0, 160);
+      if (/does not exist|relation/i.test(msg)) database = "connected, but tables are missing: run `npx prisma db push` against this database";
+      else if (/Can't reach database server|ENOTFOUND|ECONNREFUSED|ETIMEDOUT/i.test(msg)) database = `cannot reach the database server (${code ?? "network"}): check the host/port; on Vercel use Supabase's Transaction pooler URL (port 6543)`;
+      else if (/password authentication failed|Authentication failed/i.test(msg)) database = "wrong database password in DATABASE_URL";
+      else database = `cannot connect${code ? ` (${code})` : ""}: ${first.slice(0, 200)}`;
     }
   }
   const providers = {
