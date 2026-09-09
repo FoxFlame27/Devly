@@ -24,6 +24,13 @@ export function getSupabase(): SupabaseClient {
   return client;
 }
 
+/** Starts Google sign-in. Supabase redirects back to /auth/callback with the tokens in the URL. */
+export function signInWithGoogle(next: string) {
+  const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+  const oauth = createClient(SUPABASE_URL!, SUPABASE_KEY!, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, flowType: "implicit" } });
+  return oauth.auth.signInWithOAuth({ provider: "google", options: { redirectTo, queryParams: { prompt: "select_account" } } });
+}
+
 /** Turns Supabase's error strings into something a person can act on. */
 export function friendlyOtpError(message: string): string {
   const m = message.toLowerCase();
