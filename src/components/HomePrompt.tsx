@@ -6,6 +6,7 @@ import { api } from "@/lib/client/api";
 import type { SafeUser } from "@/lib/client/types";
 import { ErrorText, Spinner } from "./ui";
 import { IDEAS } from "./HomeExtras";
+import { useAutosize } from "@/lib/client/useAutosize";
 
 const PENDING_KEY = "bb.pendingPrompt";
 
@@ -34,6 +35,7 @@ export function HomePrompt({ user }: { user: SafeUser | null }) {
   const router = useRouter();
   const ref = useRef<HTMLTextAreaElement>(null);
   const started = useRef(false);
+  useAutosize(ref, prompt, 360);
 
   async function build(text: string) {
     setBusy(true);
@@ -113,7 +115,7 @@ export function HomePrompt({ user }: { user: SafeUser | null }) {
           placeholder="Build a game..."
           rows={2}
           disabled={busy}
-          className="w-full resize-none bg-transparent px-4 pt-4 text-[15px] leading-relaxed outline-none placeholder:text-stone-400"
+          className="block w-full resize-none bg-transparent px-4 pt-4 text-[15px] leading-relaxed outline-none placeholder:text-stone-400 scroll-thin"
           autoFocus
         />
         <div className="flex items-center justify-between px-3 pb-3">

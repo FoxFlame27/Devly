@@ -6,6 +6,7 @@ import { ArrowUp, Wand2 } from "lucide-react";
 import { streamSse } from "@/lib/client/sse";
 import type { ModelOption } from "@/lib/client/types";
 import { Button, Spinner } from "../ui";
+import { useAutosize } from "@/lib/client/useAutosize";
 
 type Msg = { role: "user" | "assistant"; content: string; error?: string };
 type Ev = { type: "text"; delta: string } | { type: "done"; model: string } | { type: "error"; message: string };
@@ -20,6 +21,8 @@ export function AskPane({ projectId, models, context, onHandoff, builderBusy }: 
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const list = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  useAutosize(inputRef, text, 200);
   useEffect(() => {
     if (list.current) list.current.scrollTop = list.current.scrollHeight;
   }, [msgs]);
@@ -76,7 +79,7 @@ export function AskPane({ projectId, models, context, onHandoff, builderBusy }: 
         {msgs.map((m, i) =>
           m.role === "user" ? (
             <div key={i} className="flex justify-end">
-              <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-stone-200 px-3.5 py-2 text-sm">{m.content}</div>
+              <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-stone-200 px-3.5 py-2 text-sm">{m.content}</div>
             </div>
           ) : (
             <div key={i} className="max-w-[95%] space-y-2">
@@ -102,6 +105,7 @@ export function AskPane({ projectId, models, context, onHandoff, builderBusy }: 
       <div className="shrink-0 border-t border-line p-3">
         <div className="flex items-end gap-2 rounded-2xl border border-line bg-surface px-3 py-2 focus-within:border-stone-400">
           <textarea
+            ref={inputRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
@@ -112,7 +116,7 @@ export function AskPane({ projectId, models, context, onHandoff, builderBusy }: 
             }}
             rows={1}
             placeholder="Ask a question..."
-            className="max-h-32 min-h-6 flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-stone-400"
+            className="block min-h-6 flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-stone-400 scroll-thin"
           />
           <button onClick={send} disabled={!text.trim() || busy} className="grid size-7 shrink-0 place-items-center rounded-full bg-accent text-white disabled:opacity-40" aria-label="Ask">
             <ArrowUp size={14} />
