@@ -19,12 +19,17 @@ export async function startChallenge(user: { id: string; email: string; name: st
   const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
   const ch = await db.loginChallenge.create({ data: { userId: user.id, codeHash: hmac(`${user.id}:${code}`), expiresAt: new Date(Date.now() + CODE_TTL_MS) } });
   const provider = getEmailProvider();
-  await provider.send({
+  try {
+    await provider.send({
     to: user.email,
     subject: `${code} is your Devly code`,
     text: `Your Devly sign-in code is ${code}. It expires in 10 minutes. If you didn't try to sign in, you can ignore this email.`,
     html: `<div style="font-family:system-ui,sans-serif;max-width:420px"><p>Your Devly sign-in code is</p><p style="font-size:32px;letter-spacing:6px;font-weight:600">${code}</p><p style="color:#666">It expires in 10 minutes. If you didn't try to sign in, ignore this email.</p></div>`,
-  });
+    });
+  } catch (e) {
+    console.error("[email] send failed", e);
+    throw new HttpError(502, "We couldn't send the code to that email address right now. Please try again in a moment.", "email_failed");
+  }
   return { challengeId: ch.id, ...(provider.name === "console" && process.env.NODE_ENV !== "production" ? { devCode: code } : {}) };
 }
 
