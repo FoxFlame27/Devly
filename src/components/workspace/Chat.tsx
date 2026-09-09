@@ -54,7 +54,7 @@ export function Chat(p: Props) {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-11 shrink-0 items-center justify-between border-b border-line px-3">
+      <div className="mx-auto flex h-11 w-full max-w-3xl shrink-0 items-center justify-between px-3">
         <div className="relative min-w-0">
           <button onClick={() => setConvOpen((o) => !o)} className="flex max-w-[220px] items-center gap-1 truncate rounded-lg px-2 py-1 text-sm hover:bg-stone-100">
             <span className="truncate">{current?.title ?? "New conversation"}</span>
@@ -102,22 +102,24 @@ export function Chat(p: Props) {
         }}
         className="min-h-0 flex-1 overflow-y-auto px-4 py-4 scroll-thin"
       >
+        <div className="mx-auto max-w-3xl">
         {p.messages.length === 0 ? (
           <div className="mt-10 text-center text-sm text-muted">
             <p className="text-ink">Tell me what to build or change.</p>
             <p className="mt-1 text-xs">For example: &ldquo;Make the header sticky&rdquo; or &ldquo;Add a contact form&rdquo;.</p>
           </div>
         ) : null}
-        <div className="space-y-4">
+        <div className="space-y-5">
           {p.messages.map((m, i) => (
             <Message key={m.id} m={m} isLast={i === p.messages.length - 1} running={p.running} status={p.status} onRetry={p.onRetry} advanced={p.advanced} />
           ))}
         </div>
+        </div>
       </div>
 
-      <div className="shrink-0 border-t border-line p-3">
+      <div className="mx-auto w-full max-w-3xl shrink-0 p-3 pb-4">
         {p.disabledReason ? <p className="mb-2 rounded-lg bg-stone-100 px-3 py-2 text-xs text-muted">{p.disabledReason}</p> : null}
-        <div className="rounded-2xl border border-line bg-surface focus-within:border-stone-400">
+        <div className="rounded-2xl border border-line bg-surface shadow-[0_8px_30px_-16px_rgba(0,0,0,0.5)] focus-within:border-stone-400">
           <textarea
             ref={inputRef}
             value={text}
@@ -146,9 +148,9 @@ export function Chat(p: Props) {
                 <Square size={12} /> Stop
               </Button>
             ) : (
-              <Button size="sm" variant="primary" onClick={submit} disabled={!text.trim() || !!p.disabledReason} aria-label="Send">
+              <button onClick={submit} disabled={!text.trim() || !!p.disabledReason} aria-label="Send" className="grid size-8 place-items-center rounded-lg bg-accent text-white hover:brightness-95 disabled:opacity-40">
                 <ArrowUp size={16} />
-              </Button>
+              </button>
             )}
           </div>
         </div>
@@ -161,7 +163,7 @@ function Message({ m, isLast, running, status, onRetry, advanced }: { m: ChatMes
   if (m.role === "USER") {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-stone-200 px-4 py-2.5 text-sm text-ink">
+        <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-stone-200 px-4 py-2.5 text-[15px] text-ink">
           <TextWithLinks text={m.content} />
         </div>
       </div>
