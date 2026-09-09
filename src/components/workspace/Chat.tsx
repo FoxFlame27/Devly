@@ -23,6 +23,8 @@ type Props = {
   onSend: (text: string) => void;
   onStop: () => void;
   onRetry: () => void;
+  queue: { id: string; text: string }[];
+  onUnqueue: (id: string) => void;
   onOpenConversation: (id: string | null) => void;
   onNewConversation: () => void;
   onDeleteConversation: (id: string) => void;
@@ -44,7 +46,7 @@ export function Chat(p: Props) {
 
   function submit() {
     const t = text.trim();
-    if (!t || p.running) return;
+    if (!t) return;
     setText("");
     p.onSend(t);
     stickToBottom.current = true;
@@ -119,6 +121,19 @@ export function Chat(p: Props) {
 
       <div className="mx-auto w-full max-w-3xl shrink-0 p-3 pb-4">
         {p.disabledReason ? <p className="mb-2 rounded-lg bg-stone-100 px-3 py-2 text-xs text-muted">{p.disabledReason}</p> : null}
+        {p.queue.length ? (
+          <div className="mb-2 space-y-1">
+            {p.queue.map((q, i) => (
+              <div key={q.id} className="flex items-center gap-2 rounded-lg border border-dashed border-line px-3 py-1.5 text-xs text-muted">
+                <span className="shrink-0 rounded bg-stone-100 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">Queued {i + 1}</span>
+                <span className="min-w-0 flex-1 truncate text-ink">{q.text}</span>
+                <button onClick={() => p.onUnqueue(q.id)} className="shrink-0 hover:text-red-600" title="Remove from queue">
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
         <div className="rounded-2xl border border-line bg-surface shadow-[0_8px_30px_-16px_rgba(0,0,0,0.5)] focus-within:border-stone-400">
           <textarea
             ref={inputRef}
@@ -130,7 +145,7 @@ export function Chat(p: Props) {
                 submit();
               }
             }}
-            placeholder={p.messages.length ? "What should I change?" : "Describe what you want to build..."}
+            placeholder={p.running ? "Type the next thing to do. It runs when this one finishes..." : p.messages.length ? "What should I change?" : "Describe what you want to build..."}
             rows={3}
             className="w-full resize-none bg-transparent px-4 pt-3 text-sm outline-none placeholder:text-stone-400"
           />
