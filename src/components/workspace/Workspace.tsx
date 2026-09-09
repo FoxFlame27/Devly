@@ -6,7 +6,7 @@ import type { EffortChoice, EffortOption, ModelOption, ProjectDetail, SafeUser }
 import { Button } from "../ui";
 import { Mark } from "../ui/Mark";
 import { ThemePicker } from "../ThemePicker";
-import { MessageSquare, Eye, FolderOpen, Settings as SettingsIcon, Database, TerminalSquare, ScrollText } from "lucide-react";
+import { MessageSquare, Eye, FolderOpen, Settings as SettingsIcon, Database, TerminalSquare, ScrollText, MessageCircleQuestion } from "lucide-react";
 import { PromptCounter } from "../PromptCounter";
 import { Chat } from "./Chat";
 import { PreviewPane } from "./PreviewPane";
@@ -15,13 +15,14 @@ import { usePreview } from "./usePreview";
 import { ConflictModal, HistoryModal, PublishModal } from "./Dialogs";
 import { SettingsPane } from "./SettingsPane";
 import { DataPane } from "./DataPane";
+import { AskPane } from "./AskPane";
 import { FileExplorer } from "./FileExplorer";
 import { CodeEditor } from "./CodeEditor";
 import { Terminal } from "./Terminal";
 import { LogsPane } from "./LogsPane";
 
 type Props = { project: ProjectDetail; user: SafeUser; models: ModelOption[]; defaultModel: string; efforts: EffortOption[]; defaultEffort: EffortChoice };
-type RightTab = "preview" | "code" | "settings" | "data" | "terminal" | "logs";
+type RightTab = "preview" | "code" | "settings" | "data" | "ask" | "terminal" | "logs";
 type MobileTab = "chat" | "preview";
 
 const TABS: { id: RightTab; label: string; icon: React.ComponentType<{ size?: number }>; advanced?: boolean }[] = [
@@ -29,6 +30,7 @@ const TABS: { id: RightTab; label: string; icon: React.ComponentType<{ size?: nu
   { id: "code", label: "Files", icon: FolderOpen },
   { id: "data", label: "Database", icon: Database },
   { id: "settings", label: "Settings", icon: SettingsIcon },
+  { id: "ask", label: "Ask", icon: MessageCircleQuestion },
   { id: "terminal", label: "Terminal", icon: TerminalSquare, advanced: true },
   { id: "logs", label: "Logs", icon: ScrollText, advanced: true },
 ];
@@ -39,7 +41,14 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
   const [model, setModel] = useState(initialProject.settings?.model && models.some((m) => m.id === initialProject.settings?.model) ? initialProject.settings.model : defaultModel);
   const [effort, setEffort] = useState<EffortChoice>((initialProject.settings?.effort as EffortChoice | undefined) ?? defaultEffort);
   const [advanced, setAdvanced] = useState(false);
-  const [rightTab, setRightTab] = useState<RightTab>("preview");
+  const [rightTab, setRightTabState] = useState<RightTab>("preview");
+  const [lastNonAskTab, setLastNonAskTab] = useState<RightTab>("preview");
+  const setRightTab = (t: RightTab) => {
+    setRightTabState((prev) => {
+      if (prev !== "ask") setLastNonAskTab(prev);
+      return t;
+    });
+  };
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [saveState, setSaveState] = useState<"saved" | "saving" | "unsaved">("saved");
   const [history, setHistory] = useState(false);
@@ -212,6 +221,18 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
           />
         ) : null}
         {rightTab === "data" ? <DataPane projectId={project.id} refreshKey={filesKey} /> : null}
+        {rightTab === "ask" ? (
+          <AskPane
+            projectId={project.id}
+            models={models}
+            context={{ tab: lastNonAskTab, filePath: lastNonAskTab === "code" ? selectedFile : null }}
+            onHandoff={(t) => {
+              setRightTab("preview");
+              send(t);
+            }}
+            builderBusy={chat.running}
+          />
+        ) : null}
         {advanced && rightTab === "terminal" ? <Terminal projectId={project.id} onRan={() => setFilesKey((k) => k + 1)} /> : null}
         {advanced && rightTab === "logs" ? <LogsPane projectId={project.id} info={preview.info} /> : null}
       </div>

@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "prisma"],
   agentRules: false,
   devIndicators: false,
+  // Keep the dev cache small: this machine has very little free disk.
+  experimental: { turbopackFileSystemCacheForDev: false },
   outputFileTracingExcludes: { "*": [".data/**"] },
   async headers() {
     return [

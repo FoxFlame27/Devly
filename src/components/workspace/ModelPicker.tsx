@@ -52,6 +52,7 @@ export function ModelPicker({ models, model, onModel, efforts, effort, onEffort 
         aria-expanded={open}
         title="Choose model and effort"
       >
+        <span className="text-muted">Model:</span>
         <span className="truncate font-medium text-ink">{shortName(current?.label ?? "Model")}</span>
         <span className="text-stone-400">·</span>
         <span className="truncate">{currentEffort?.label}</span>

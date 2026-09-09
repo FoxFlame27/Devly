@@ -147,6 +147,9 @@ function currentDepsHash(projectId: string): string | null {
 /** Installs dependencies when package.json changed or node_modules is missing. */
 export async function ensureInstalled(projectId: string, onOutput?: (line: string) => void): Promise<{ ok: boolean; output: string }> {
   const s = state(projectId);
+  // Tools inside the sandbox leave caches in its private HOME; they are safe to drop and disk is scarce.
+  for (const junk of ["Library", "tmp", ".cache"]) fs.rmSync(path.join(projectHomeDir(projectId), junk), { recursive: true, force: true });
+  fs.mkdirSync(path.join(projectHomeDir(projectId), "tmp"), { recursive: true });
   const hash = currentDepsHash(projectId);
   if (!hash) return { ok: true, output: "" };
   const hf = await installHashFile(projectId);
