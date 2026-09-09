@@ -13,12 +13,16 @@ export type ChatState = {
   status: string | null;
   error: string | null;
   lastPrompt: string | null;
+  /** Messages waiting to be sent once the current run finishes */
+  queue: { id: string; text: string; model?: string | null; effort?: string | null }[];
 };
 
 type Handlers = { onDone: (r: { changes: FileChanges; promptsRemaining: number | null }) => void; onPreview: (s: string, url: string | null) => void; onPromptLimit: () => void };
 
 export function useChat(projectId: string, handlers: Handlers) {
-  const [state, setState] = useState<ChatState>({ conversations: [], conversationId: null, messages: [], running: false, status: null, error: null, lastPrompt: null });
+  const [state, setState] = useState<ChatState>({ conversations: [], conversationId: null, messages: [], running: false, status: null, error: null, lastPrompt: null, queue: [] });
+  const queueRef = useRef<ChatState["queue"]>([]);
+  const sendRef = useRef<(text: string, model?: string | null, effort?: string | null) => Promise<void>>(async () => {});
   const runId = useRef<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   const h = useRef(handlers);
@@ -106,6 +110,10 @@ export function useChat(projectId: string, handlers: Handlers) {
         abort.current = null;
         setState((s) => ({ ...s, running: false, status: null, messages: s.messages.map((m) => (m.pending ? { ...m, pending: false, status: stoppedByUser ? "STOPPED" : m.status } : m)) }));
         loadConversations().catch(() => {});
+        const next = stoppedByUser ? undefined : queueRef.current.shift();
+        if (stoppedByUser) queueRef.current = [];
+        setState((s) => ({ ...s, queue: [...queueRef.current] }));
+        if (next) setTimeout(() => sendRef.current(next.text, next.model, next.effort), 50);
       }
     },
     [loadConversations],
@@ -146,6 +154,12 @@ export function useChat(projectId: string, handlers: Handlers) {
     async (text: string, model?: string | null, effort?: string | null) => {
       const trimmed = text.trim();
       if (!trimmed) return;
+      if (runId.current || abort.current) {
+        // Busy: queue it and send automatically when the current run finishes.
+        queueRef.current.push({ id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, text: trimmed, model, effort });
+        setState((s) => ({ ...s, queue: [...queueRef.current] }));
+        return;
+      }
       const userMsg: ChatMessage = { id: `local-${Date.now()}`, role: "USER", content: trimmed };
       const draft: ChatMessage = { id: `draft-${Date.now()}`, role: "ASSISTANT", content: "", activity: [], pending: true };
       setState((s) => ({ ...s, messages: [...s.messages, userMsg, draft], running: true, status: "Thinking...", error: null, lastPrompt: trimmed }));
@@ -155,6 +169,15 @@ export function useChat(projectId: string, handlers: Handlers) {
     },
     [projectId, state.conversationId, consume],
   );
+
+  useEffect(() => {
+    sendRef.current = send;
+  }, [send]);
+
+  const unqueue = useCallback((id: string) => {
+    queueRef.current = queueRef.current.filter((q) => q.id !== id);
+    setState((s) => ({ ...s, queue: [...queueRef.current] }));
+  }, []);
 
   const stop = useCallback(async () => {
     const id = runId.current;
@@ -175,5 +198,5 @@ export function useChat(projectId: string, handlers: Handlers) {
     [projectId, loadConversations, openConversation, state.conversationId],
   );
 
-  return { ...state, send, stop, openConversation, newConversation, deleteConversation };
+  return { ...state, send, stop, unqueue, openConversation, newConversation, deleteConversation };
 }

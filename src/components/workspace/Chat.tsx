@@ -144,9 +144,14 @@ export function Chat(p: Props) {
           <div className="flex items-center justify-between px-2 pb-2">
             <ModelPicker models={p.models} model={p.model} onModel={p.onModel} efforts={p.efforts} effort={p.effort} onEffort={p.onEffort} />
             {p.running ? (
-              <Button size="sm" variant="secondary" onClick={p.onStop}>
-                <Square size={12} /> Stop
-              </Button>
+              <span className="flex items-center gap-1">
+                <Button size="sm" variant="ghost" onClick={submit} disabled={!text.trim()} title="Add to the queue">
+                  Queue
+                </Button>
+                <Button size="sm" variant="secondary" onClick={p.onStop}>
+                  <Square size={12} /> Stop
+                </Button>
+              </span>
             ) : (
               <button onClick={submit} disabled={!text.trim() || !!p.disabledReason} aria-label="Send" className="grid size-8 place-items-center rounded-lg bg-accent text-white hover:brightness-95 disabled:opacity-40">
                 <ArrowUp size={16} />

@@ -288,6 +288,8 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
             onSend={send}
             onStop={chat.stop}
             onRetry={() => chat.lastPrompt && send(chat.lastPrompt)}
+            queue={chat.queue}
+            onUnqueue={chat.unqueue}
             onOpenConversation={chat.openConversation}
             onNewConversation={chat.newConversation}
             onDeleteConversation={chat.deleteConversation}
@@ -316,6 +318,8 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
             onSend={send}
             onStop={chat.stop}
             onRetry={() => chat.lastPrompt && send(chat.lastPrompt)}
+            queue={chat.queue}
+            onUnqueue={chat.unqueue}
             onOpenConversation={chat.openConversation}
             onNewConversation={chat.newConversation}
             onDeleteConversation={chat.deleteConversation}
