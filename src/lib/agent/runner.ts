@@ -169,7 +169,7 @@ export async function runAgent(input: RunInput): Promise<RunOutput> {
         const res = await executeTool(tu.name, tu.input, ctx);
         item.ok = res.ok;
         if (tu.name !== "ask_user") item.summary = res.output.split("\n")[0].slice(0, 160);
-        emit({ type: "tool_end", id: tu.id, name: tu.name, ok: res.ok, summary: item.summary });
+        emit({ type: "tool_end", id: tu.id, name: tu.name, ok: res.ok, summary: item.summary ?? "" });
         if (tu.name === "write_file" || tu.name === "edit_file" || tu.name === "delete_file" || tu.name === "run_command" || tu.name === "install_package") {
           emit({ type: "changes", changes: structuredClone(changes) });
         }
