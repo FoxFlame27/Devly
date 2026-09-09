@@ -13,7 +13,7 @@ import type { Effort } from "@/config/models";
 
 const MAX_MODEL_CALLS = 40;
 const MAX_TOOL_CALLS = 120;
-const MAX_RUN_MS = 12 * 60 * 1000;
+const MAX_RUN_MS = 25 * 60 * 1000;
 const MAX_OUTPUT_TOKENS = 16_000;
 const HISTORY_MESSAGES = 30;
 const HISTORY_CHARS_PER_MESSAGE = 6_000;
@@ -25,6 +25,7 @@ export type RunInput = {
   userId: string;
   model: string;
   effort: Effort;
+  unlimited: boolean;
   userMessage: string;
   runId: string;
   controller: AbortController;
@@ -84,6 +85,8 @@ export async function runAgent(input: RunInput): Promise<RunOutput> {
     signal: controller.signal,
     changes,
     fixing: false,
+    unlimited: input.unlimited,
+    status: (text) => emit({ type: "status", text }),
     previewStatus: (s, url) => emit({ type: "preview", status: s, url }),
   };
 
@@ -154,6 +157,7 @@ export async function runAgent(input: RunInput): Promise<RunOutput> {
           /* keep default */
         }
         const item: ActivityItem = { id: tu.id, name: tu.name, label, detail: detailFor(tu.name, tu.input) };
+        if ((tu.name === "generate_3d_model" || tu.name === "texture_3d_model") && typeof (tu.input as { name?: unknown })?.name === "string") item.detail = (tu.input as { name: string }).name;
         activity.push(item);
         emit({ type: "tool_start", id: tu.id, name: tu.name, label, detail: item.detail });
         emit({ type: "status", text: label });

@@ -295,6 +295,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
             onDeleteConversation={chat.deleteConversation}
             disabledReason={disabledReason}
             advanced={advanced}
+            projectId={project.id}
           />
         </div>
         {panelOpen ? <div className="my-3 mr-3 w-[46%] min-w-[420px] overflow-hidden rounded-2xl border border-line bg-surface">{rightPanel}</div> : null}
@@ -325,6 +326,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
             onDeleteConversation={chat.deleteConversation}
             disabledReason={disabledReason}
             advanced={false}
+            projectId={project.id}
           />
         </div>
         <div className={`min-h-0 flex-1 ${mobileTab === "preview" ? "" : "hidden"}`}>

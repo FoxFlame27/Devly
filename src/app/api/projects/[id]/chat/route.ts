@@ -9,6 +9,7 @@ import { runAgent } from "@/lib/agent/runner";
 import { encodeSse, type AgentEvent } from "@/lib/agent/events";
 import { activeRunForProject, openChannel, publish } from "@/lib/agent/registry";
 import { materialize } from "@/lib/projects/files";
+import { isUnlimited } from "@/lib/auth/session";
 
 const schema = z.object({
   message: z.string().trim().min(1).max(20_000),
@@ -80,6 +81,7 @@ export const POST = projectRoute(async (req, { user, project }) => {
           userId: user.id,
           model,
           effort,
+          unlimited: isUnlimited(user),
           userMessage: body.message,
           runId,
           controller,

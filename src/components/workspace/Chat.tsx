@@ -8,6 +8,7 @@ import { ModelPicker } from "./ModelPicker";
 import { ArrowUp, Square } from "lucide-react";
 import { findUrls, LinkChip, TextWithLinks } from "../LinkChip";
 import { useAutosize } from "@/lib/client/useAutosize";
+import { ModelCard } from "./ModelCard";
 
 type Props = {
   messages: ChatMessage[];
@@ -31,6 +32,7 @@ type Props = {
   onDeleteConversation: (id: string) => void;
   disabledReason?: string | null;
   advanced: boolean;
+  projectId: string;
 };
 
 export function Chat(p: Props) {
@@ -115,7 +117,7 @@ export function Chat(p: Props) {
         ) : null}
         <div className="space-y-5">
           {p.messages.map((m, i) => (
-            <Message key={m.id} m={m} isLast={i === p.messages.length - 1} running={p.running} status={p.status} onRetry={p.onRetry} advanced={p.advanced} />
+            <Message key={m.id} m={m} isLast={i === p.messages.length - 1} running={p.running} status={p.status} onRetry={p.onRetry} advanced={p.advanced} projectId={p.projectId} onSend={p.onSend} />
           ))}
         </div>
         </div>
@@ -181,7 +183,7 @@ export function Chat(p: Props) {
   );
 }
 
-function Message({ m, isLast, running, status, onRetry, advanced }: { m: ChatMessage; isLast: boolean; running: boolean; status: string | null; onRetry: () => void; advanced: boolean }) {
+function Message({ m, isLast, running, status, onRetry, advanced, projectId, onSend }: { m: ChatMessage; isLast: boolean; running: boolean; status: string | null; onRetry: () => void; advanced: boolean; projectId: string; onSend: (t: string) => void }) {
   if (m.role === "USER") {
     return (
       <div className="flex justify-end">
@@ -194,6 +196,7 @@ function Message({ m, isLast, running, status, onRetry, advanced }: { m: ChatMes
   const active = m.pending && running && isLast;
   const changes = m.changes;
   const hasChanges = changes && (changes.created.length || changes.changed.length || changes.deleted.length);
+  const models = (m.activity ?? []).filter((a) => (a.name === "generate_3d_model" || a.name === "texture_3d_model") && a.ok && /public\/models\/[\w-]+\.glb/.test(a.summary ?? "")).map((a) => ({ file: a.summary!.match(/public\/models\/[\w-]+\.glb/)![0], name: a.detail ?? "model" }));
   return (
     <div className="max-w-[95%] space-y-2">
       {m.activity && m.activity.length ? <Activity items={m.activity} advanced={advanced} /> : null}
@@ -215,6 +218,9 @@ function Message({ m, isLast, running, status, onRetry, advanced }: { m: ChatMes
           <span>{status ?? "Working..."}</span>
         </div>
       ) : null}
+      {models.map((mm) => (
+        <ModelCard key={mm.file} projectId={projectId} file={mm.file} name={mm.file.replace(/^public\/models\//, "").replace(/\.glb$/, "")} onTexture={onSend} busy={running} />
+      ))}
       {hasChanges ? <ChangeSummary changes={changes} /> : null}
       {m.status === "STOPPED" && !active ? <p className="text-xs text-muted">Stopped.</p> : null}
       {m.error ? (

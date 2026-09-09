@@ -9,6 +9,7 @@ import { buildTree, deleteFile, emptyChanges, listFiles, mergeChanges, readFile,
 import { collectPreviewErrors, ensureRunning, markInstalled, previewInfo, startPreview } from "../projects/preview";
 import { projectEnv } from "../projects/env-vars";
 import { HttpError } from "../http";
+import { generateModel, meshyConfigured, readModelsIndex, textureModel } from "../meshy";
 
 export type ToolContext = {
   projectId: string;
@@ -17,6 +18,9 @@ export type ToolContext = {
   changes: FileChanges;
   /** true after get_project_errors reported problems, so later edits read as "Fixing an issue..." */
   fixing: boolean;
+  /** Unlimited users can generate 3D models */
+  unlimited: boolean;
+  status?: (text: string) => void;
   previewStatus?: (status: string, url: string | null) => void;
 };
 
@@ -240,6 +244,53 @@ export const TOOLS: ToolDef[] = [
     },
   }),
 ];
+
+const MODEL_TOOLS: ToolDef[] = [
+  def({
+    name: "generate_3d_model",
+    description: "Creates a real 3D model (GLB file) from a text description with Meshy AI and saves it to public/models/<name>.glb plus a thumbnail PNG. Takes a few minutes. Afterwards show it on the site, e.g. with <model-viewer> (script: https://cdn.jsdelivr.net/npm/@google/model-viewer@4/dist/model-viewer.min.js) using src=\"/models/<name>.glb\". Only available to users with unlimited access.",
+    schema: z.object({
+      name: z.string().min(1).max(40).describe("Short name, used for the file name, e.g. 'dragon'"),
+      prompt: z.string().min(3).max(800).describe("What the model should look like"),
+      style: z.enum(["realistic", "cartoon", "lowpoly"]).optional(),
+      textured: z.boolean().optional().describe("Also paint textures (slower, default true)"),
+    }),
+    label: (i) => `Creating a 3D model of ${i.name}...`,
+    run: async (i, ctx) => {
+      if (!ctx.unlimited) return "Error: 3D model generation needs unlimited access. Tell the user to enter an access code.";
+      if (!meshyConfigured()) return "Error: 3D generation isn't set up on this platform.";
+      const entry = await generateModel(ctx.projectId, { name: i.name, prompt: i.prompt, style: i.style, textured: i.textured ?? true, signal: ctx.signal, onProgress: (l) => ctx.status?.(l) });
+      mergeChanges(ctx.changes, await syncFromDisk(ctx.projectId));
+      mergeChanges(ctx.changes, { created: [entry.file], changed: [], deleted: [] });
+      return `Saved ${entry.file}${entry.thumbnail ? ` and ${entry.thumbnail}` : ""}. Use it on the site with <model-viewer src="/models/${entry.file.split("/").pop()}" camera-controls auto-rotate>.`;
+    },
+  }),
+  def({
+    name: "texture_3d_model",
+    description: "Re-paints the textures of a model previously created with generate_3d_model, using a text style description. Replaces the GLB in place. Only for unlimited users.",
+    schema: z.object({ name: z.string().min(1).max(40).describe("Name of the existing model"), prompt: z.string().min(3).max(800).describe("Texture / material style, e.g. 'weathered bronze with green patina'") }),
+    label: (i) => `Texturing ${i.name}...`,
+    run: async (i, ctx) => {
+      if (!ctx.unlimited) return "Error: texturing needs unlimited access.";
+      if (!meshyConfigured()) return "Error: 3D generation isn't set up on this platform.";
+      const entry = await textureModel(ctx.projectId, { name: i.name, prompt: i.prompt, signal: ctx.signal, onProgress: (l) => ctx.status?.(l) });
+      mergeChanges(ctx.changes, await syncFromDisk(ctx.projectId));
+      mergeChanges(ctx.changes, { created: [], changed: [entry.file], deleted: [] });
+      return `Saved ${entry.file} with new textures.`;
+    },
+  }),
+  def({
+    name: "list_3d_models",
+    description: "Lists the 3D models generated for this project (name, file, prompt).",
+    schema: z.object({}),
+    label: () => "Looking at your 3D models...",
+    run: async (_i, ctx) => {
+      const list = await readModelsIndex(ctx.projectId);
+      return list.length ? list.map((m) => `${m.name}: ${m.file} (${m.textured ? "textured" : "untextured"}) — ${m.prompt}`).join("\n") : "No 3D models yet.";
+    },
+  }),
+];
+TOOLS.push(...MODEL_TOOLS);
 
 export function toolByName(name: string): ToolDef | undefined {
   return TOOLS.find((t) => t.name === name);

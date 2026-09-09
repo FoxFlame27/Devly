@@ -5,6 +5,7 @@ const schema = z.object({
   ANTHROPIC_API_KEY: z.string().optional().default(""),
   GEMINI_API_KEY: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
+  MESHY_API_KEY: z.string().optional(),
   DATABASE_URL: z.string().url(),
   SESSION_SECRET: z.string().min(32, "SESSION_SECRET must be at least 32 characters"),
   ENCRYPTION_KEY: z.string().regex(/^[0-9a-f]{64}$/i, "ENCRYPTION_KEY must be 64 hex characters"),
