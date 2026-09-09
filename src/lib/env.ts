@@ -9,7 +9,7 @@ const schema = z.object({
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().optional(),
   EMAIL_VERIFY: z.string().optional(),
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().regex(/^postgres(ql)?:\/\/.+/, "must start with postgresql://"),
   SESSION_SECRET: z.string().min(32, "SESSION_SECRET must be at least 32 characters"),
   ENCRYPTION_KEY: z.string().regex(/^[0-9a-f]{64}$/i, "ENCRYPTION_KEY must be 64 hex characters"),
   APP_URL: z.string().url().default("http://localhost:3000"),

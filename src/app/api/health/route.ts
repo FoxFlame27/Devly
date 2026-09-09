@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 const rules: Record<string, z.ZodTypeAny> = {
-  DATABASE_URL: z.string().url(),
+  DATABASE_URL: z.string().regex(/^postgres(ql)?:\/\/.+/),
   SESSION_SECRET: z.string().min(32),
   ENCRYPTION_KEY: z.string().regex(/^[0-9a-f]{64}$/i),
   APP_URL: z.string().url(),
@@ -59,7 +59,7 @@ function hint(name: string): string {
       return "must be exactly 64 hex characters, e.g. from `openssl rand -hex 32`";
     case "DATABASE_URL":
     case "APP_URL":
-      return "must be a full URL";
+      return name === "DATABASE_URL" ? "must start with postgresql:// (no quotes, no [YOUR-PASSWORD] placeholder)" : "must be a full URL";
     default:
       return "check the value";
   }
