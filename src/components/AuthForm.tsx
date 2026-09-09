@@ -8,7 +8,7 @@ import { Button, ErrorText, Field, inputClass, Logo } from "./ui";
 
 type Verify = { provider?: "supabase"; challengeId?: string; email: string; masked?: string; devCode?: string; devReason?: string };
 
-const RESEND_COOLDOWN = 30;
+const RESEND_COOLDOWN = 15;
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [email, setEmail] = useState("");

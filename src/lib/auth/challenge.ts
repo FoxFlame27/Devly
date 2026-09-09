@@ -6,7 +6,7 @@ import { HttpError } from "../http";
 import { getEmailProvider } from "../email";
 
 const CODE_TTL_MS = 10 * 60 * 1000;
-const MAX_ATTEMPTS = 5;
+const MAX_ATTEMPTS = 10;
 
 export function maskEmail(email: string) {
   const [user, domain] = email.split("@");
@@ -30,15 +30,6 @@ export async function startChallenge(user: { id: string; email: string; name: st
     console.error("[email] send failed", e);
     const detail = e instanceof Error ? e.message : String(e);
     const testMode = /only send testing emails|verify a domain/i.test(detail);
-    if (process.env.NODE_ENV !== "production") {
-      // Local development: don't block on email delivery, show the code on screen instead.
-      console.log(`\n[email] (fallback) code for ${user.email}: ${code}\n`);
-      return {
-        challengeId: ch.id,
-        devCode: code,
-        devReason: testMode ? "Resend is in test mode: it only delivers to your own address until you verify a domain." : "The code email couldn't be sent on this computer.",
-      };
-    }
     const msg = testMode
       ? "Sign-ups are temporarily limited while email delivery is being set up. Please try again later."
       : "We couldn't send the code to that email address right now. Please try again in a moment.";

@@ -9,9 +9,9 @@ import { supabaseServerConfigured } from "@/lib/auth/supabase-server";
 
 export const POST = handler(async (req) => {
   assertSameOrigin(req);
-  enforceRateLimit(req, "login", 20, 15 * 60 * 1000);
+  enforceRateLimit(req, "login", 200, 15 * 60 * 1000);
   const body = await parseBody(req, loginSchema);
-  enforceRateLimit(req, "login-email", 10, 15 * 60 * 1000, body.email);
+  enforceRateLimit(req, "login-email", 40, 15 * 60 * 1000, body.email);
   const user = await db.user.findUnique({ where: { email: body.email } });
   const ok = user ? await verifyPassword(body.password, user.passwordHash) : false;
   if (!user || !ok) throw new HttpError(401, "Wrong email or password.");

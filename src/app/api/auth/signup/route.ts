@@ -9,7 +9,7 @@ import { supabaseServerConfigured } from "@/lib/auth/supabase-server";
 
 export const POST = handler(async (req) => {
   assertSameOrigin(req);
-  enforceRateLimit(req, "signup", 10, 60 * 60 * 1000);
+  enforceRateLimit(req, "signup", 60, 60 * 60 * 1000);
   const body = await parseBody(req, signupSchema);
   const existing = await db.user.findUnique({ where: { email: body.email } });
   if (existing) throw new HttpError(409, "An account with that email already exists. Try signing in.");

@@ -14,7 +14,7 @@ const schema = z.object({
 /** Completes signup/login after a Supabase email OTP: verifies the token, then issues Devly's own session. */
 export const POST = handler(async (req) => {
   assertSameOrigin(req);
-  enforceRateLimit(req, "supabase-verify", 30, 15 * 60 * 1000);
+  enforceRateLimit(req, "supabase-verify", 200, 15 * 60 * 1000);
   const body = await parseBody(req, schema);
   const verified = await verifySupabaseToken(body.accessToken);
   let user = await db.user.findUnique({ where: { email: verified.email } });
