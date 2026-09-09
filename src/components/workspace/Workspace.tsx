@@ -100,14 +100,14 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
   };
 
   const send = useCallback(
-    (text: string) => {
+    (text: string, attachments?: { name: string; type: string; data: string }[]) => {
       if (!user.unlimited && user.promptLimit - user.promptsUsed <= 0) {
         setLimitOpen(true);
         return;
       }
       setSaveState("unsaved");
       setMobileTab("chat");
-      chat.send(text, model, effort);
+      chat.send(text, model, effort, attachments);
     },
     [chat, model, effort, user],
   );

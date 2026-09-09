@@ -21,6 +21,8 @@ export type ChatMessage = {
   changes?: FileChanges | null;
   status?: "COMPLETE" | "STOPPED" | "ERROR";
   createdAt?: string;
+  /** Images attached to a user message */
+  attachments?: { name: string; type: string; data: string }[] | null;
   /** A question the AI asked, with clickable options */
   question?: { question: string; options: string[] } | null;
   /** client-only */

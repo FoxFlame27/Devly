@@ -5,7 +5,8 @@ import remarkGfm from "remark-gfm";
 import type { ChatMessage, ConversationSummary, EffortChoice, EffortOption, ModelOption } from "@/lib/client/types";
 import { Button, Spinner } from "../ui";
 import { ModelPicker } from "./ModelPicker";
-import { ArrowUp, Square, Trash2, Sparkles } from "lucide-react";
+import { ArrowUp, Square, Trash2, Sparkles, Plus, X } from "lucide-react";
+import { readImageForUpload, type Attachment } from "@/lib/client/attachments";
 import { api } from "@/lib/client/api";
 import { findUrls, LinkChip, TextWithLinks } from "../LinkChip";
 import { useAutosize } from "@/lib/client/useAutosize";
@@ -36,7 +37,7 @@ type Props = {
   efforts: EffortOption[];
   effort: EffortChoice;
   onEffort: (e: EffortChoice) => void;
-  onSend: (text: string) => void;
+  onSend: (text: string, attachments?: Attachment[]) => void;
   onStop: () => void;
   onRetry: () => void;
   queue: { id: string; text: string }[];
@@ -53,6 +54,25 @@ export function Chat(p: Props) {
   const [text, setText] = useState("");
   const [convOpen, setConvOpen] = useState(false);
   const [improving, setImproving] = useState(false);
+  const [files, setFiles] = useState<Attachment[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  async function addFiles(list: FileList | File[]) {
+    setFileError(null);
+    const next: Attachment[] = [...files];
+    for (const f of Array.from(list)) {
+      if (next.length >= 4) {
+        setFileError("Up to 4 images per message.");
+        break;
+      }
+      try {
+        next.push(await readImageForUpload(f));
+      } catch (e) {
+        setFileError((e as Error).message);
+      }
+    }
+    setFiles(next);
+  }
   async function improve() {
     const t = text.trim();
     if (!t || improving) return;
@@ -78,10 +98,11 @@ export function Chat(p: Props) {
   }, [p.messages, p.status]);
 
   function submit() {
-    const t = text.trim();
+    const t = text.trim() || (files.length ? "Look at the attached image." : "");
     if (!t) return;
     setText("");
-    p.onSend(t);
+    p.onSend(t, files.length ? files : undefined);
+    setFiles([]);
     stickToBottom.current = true;
   }
 
@@ -168,8 +189,37 @@ export function Chat(p: Props) {
           </div>
         ) : null}
         <div className="rounded-2xl border border-line bg-surface shadow-[0_8px_30px_-16px_rgba(0,0,0,0.5)] focus-within:border-stone-400">
+          {files.length ? (
+            <div className="flex flex-wrap gap-2 px-3 pt-3">
+              {files.map((f, i) => (
+                <div key={i} className="group relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={`data:${f.type};base64,${f.data}`} alt={f.name} className="h-16 w-16 rounded-lg border border-line object-cover" />
+                  <button type="button" onClick={() => setFiles((fs) => fs.filter((_, j) => j !== i))} className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-ink text-bg opacity-0 group-hover:opacity-100" aria-label="Remove image">
+                    <X size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {fileError ? <p className="px-4 pt-2 text-xs text-red-600">{fileError}</p> : null}
           <textarea
             ref={inputRef}
+            onPaste={(e) => {
+              const imgs = Array.from(e.clipboardData.files).filter((f) => f.type.startsWith("image/"));
+              if (imgs.length) {
+                e.preventDefault();
+                addFiles(imgs);
+              }
+            }}
+            onDrop={(e) => {
+              const imgs = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+              if (imgs.length) {
+                e.preventDefault();
+                addFiles(imgs);
+              }
+            }}
+            onDragOver={(e) => e.preventDefault()}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
@@ -191,6 +241,10 @@ export function Chat(p: Props) {
           ) : null}
           <div className="flex items-center justify-between px-2 pb-2">
             <span className="flex items-center gap-1">
+              <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden onChange={(e) => e.target.files && addFiles(e.target.files).then(() => (e.target.value = ""))} />
+              <button type="button" onClick={() => fileInput.current?.click()} className="grid size-7 place-items-center rounded-full text-muted hover:bg-stone-100 hover:text-ink" title="Add a screenshot or image">
+                <Plus size={16} />
+              </button>
               <ModelPicker models={p.models} model={p.model} onModel={p.onModel} efforts={p.efforts} effort={p.effort} onEffort={p.onEffort} />
               <button type="button" onClick={improve} disabled={!text.trim() || improving} className="flex h-7 items-center gap-1 rounded-full px-2 text-xs text-muted hover:bg-stone-100 hover:text-ink disabled:opacity-40" title="Let AI improve your prompt">
                 {improving ? <Spinner className="size-3.5" /> : <Sparkles size={13} />} Improve
@@ -222,6 +276,14 @@ function Message({ m, isLast, running, status, onRetry, advanced, projectId, onS
     return (
       <div className="flex justify-end">
         <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-stone-200 px-4 py-2.5 text-[15px] text-ink">
+          {m.attachments?.length ? (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {m.attachments.map((a, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={`data:${a.type};base64,${a.data}`} alt={a.name} className="max-h-40 max-w-[220px] rounded-lg border border-line object-contain" />
+              ))}
+            </div>
+          ) : null}
           <TextWithLinks text={m.content} />
         </div>
       </div>

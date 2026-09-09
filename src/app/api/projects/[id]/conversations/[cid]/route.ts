@@ -8,7 +8,7 @@ export const GET = projectRoute(async (_req, { project, params }) => {
   const messages = await db.message.findMany({
     where: { conversationId: c.id },
     orderBy: { createdAt: "asc" },
-    select: { id: true, role: true, content: true, activity: true, changes: true, status: true, createdAt: true },
+    select: { id: true, role: true, content: true, activity: true, changes: true, status: true, createdAt: true, attachments: true },
     take: 500,
   });
   return json({ conversation: { id: c.id, title: c.title }, messages });

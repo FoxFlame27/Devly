@@ -13,6 +13,10 @@ import { isUnlimited } from "@/lib/auth/session";
 
 const schema = z.object({
   message: z.string().trim().min(1).max(20_000),
+  attachments: z
+    .array(z.object({ name: z.string().max(120), type: z.enum(["image/png", "image/jpeg", "image/webp", "image/gif"]), data: z.string().regex(/^[A-Za-z0-9+/=]+$/).max(4_000_000) }))
+    .max(4)
+    .optional(),
   conversationId: z.string().max(40).optional().nullable(),
   model: z.string().max(80).optional().nullable(),
   effort: z.string().max(10).optional().nullable(),
@@ -22,7 +26,7 @@ export const maxDuration = 300;
 
 export const POST = projectRoute(async (req, { user, project }) => {
   enforceRateLimit(req, "chat", 30, 10 * 60 * 1000, user.id);
-  const body = await parseBody(req, schema, 100_000);
+  const body = await parseBody(req, schema, 17_000_000);
   if (activeRunForProject(project.id)) throw new HttpError(409, "The AI is still working on this project. Stop it first or wait for it to finish.", "busy");
 
   let conversationId = body.conversationId ?? null;
@@ -39,7 +43,7 @@ export const POST = projectRoute(async (req, { user, project }) => {
   // Enforce the prompt limit server-side before doing any work.
   await consumePrompt(user);
 
-  const userMsg = await db.message.create({ data: { conversationId, role: "USER", content: body.message } });
+  const userMsg = await db.message.create({ data: { conversationId, role: "USER", content: body.message, attachments: body.attachments?.length ? body.attachments : undefined } });
   const assistantMsg = await db.message.create({ data: { conversationId, role: "ASSISTANT", content: "", status: "COMPLETE", model } });
   await db.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
   await materialize(project.id);
@@ -83,6 +87,7 @@ export const POST = projectRoute(async (req, { user, project }) => {
           effort,
           unlimited: isUnlimited(user),
           userMessage: body.message,
+          attachments: body.attachments,
           runId,
           controller,
           emit: send,

@@ -14,15 +14,16 @@ export type ChatState = {
   error: string | null;
   lastPrompt: string | null;
   /** Messages waiting to be sent once the current run finishes */
-  queue: { id: string; text: string; model?: string | null; effort?: string | null }[];
+  queue: { id: string; text: string; model?: string | null; effort?: string | null; attachments?: Attachment[] }[];
 };
+export type Attachment = { name: string; type: string; data: string };
 
 type Handlers = { onDone: (r: { changes: FileChanges; promptsRemaining: number | null }) => void; onPreview: (s: string, url: string | null) => void; onPromptLimit: () => void };
 
 export function useChat(projectId: string, handlers: Handlers) {
   const [state, setState] = useState<ChatState>({ conversations: [], conversationId: null, messages: [], running: false, status: null, error: null, lastPrompt: null, queue: [] });
   const queueRef = useRef<ChatState["queue"]>([]);
-  const sendRef = useRef<(text: string, model?: string | null, effort?: string | null) => Promise<void>>(async () => {});
+  const sendRef = useRef<(text: string, model?: string | null, effort?: string | null, attachments?: Attachment[]) => Promise<void>>(async () => {});
   const runId = useRef<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   const h = useRef(handlers);
@@ -116,7 +117,7 @@ export function useChat(projectId: string, handlers: Handlers) {
         const next = stoppedByUser ? undefined : queueRef.current.shift();
         if (stoppedByUser) queueRef.current = [];
         setState((s) => ({ ...s, queue: [...queueRef.current] }));
-        if (next) setTimeout(() => sendRef.current(next.text, next.model, next.effort), 50);
+        if (next) setTimeout(() => sendRef.current(next.text, next.model, next.effort, next.attachments), 50);
       }
     },
     [loadConversations],
@@ -154,21 +155,21 @@ export function useChat(projectId: string, handlers: Handlers) {
   }, [loadConversations, openConversation, attachToActiveRun]);
 
   const send = useCallback(
-    async (text: string, model?: string | null, effort?: string | null) => {
+    async (text: string, model?: string | null, effort?: string | null, attachments?: Attachment[]) => {
       const trimmed = text.trim();
       if (!trimmed) return;
       if (runId.current || abort.current) {
         // Busy: queue it and send automatically when the current run finishes.
-        queueRef.current.push({ id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, text: trimmed, model, effort });
+        queueRef.current.push({ id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, text: trimmed, model, effort, attachments });
         setState((s) => ({ ...s, queue: [...queueRef.current] }));
         return;
       }
-      const userMsg: ChatMessage = { id: `local-${Date.now()}`, role: "USER", content: trimmed };
+      const userMsg: ChatMessage = { id: `local-${Date.now()}`, role: "USER", content: trimmed, attachments: attachments?.length ? attachments : undefined };
       const draft: ChatMessage = { id: `draft-${Date.now()}`, role: "ASSISTANT", content: "", activity: [], pending: true };
       setState((s) => ({ ...s, messages: [...s.messages, userMsg, draft], running: true, status: "Thinking...", error: null, lastPrompt: trimmed }));
       const controller = new AbortController();
       abort.current = controller;
-      await consume(`/api/projects/${projectId}/chat`, { message: trimmed, conversationId: state.conversationId, model, effort }, draft.id, controller);
+      await consume(`/api/projects/${projectId}/chat`, { message: trimmed, conversationId: state.conversationId, model, effort, attachments: attachments?.length ? attachments : undefined }, draft.id, controller);
     },
     [projectId, state.conversationId, consume],
   );

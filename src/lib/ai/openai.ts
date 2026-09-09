@@ -24,7 +24,17 @@ function toInput(messages: AIMessage[]): Item[] {
       out.push({ role: m.role, content: m.content });
       continue;
     }
-    for (const b of m.content as AIContentBlock[]) {
+    const blocks = m.content as AIContentBlock[];
+    if (m.role === "user" && blocks.some((b) => b.type === "image")) {
+      const parts: unknown[] = [];
+      for (const b of blocks) {
+        if (b.type === "text") parts.push({ type: "input_text", text: b.text });
+        else if (b.type === "image") parts.push({ type: "input_image", image_url: `data:${b.mediaType};base64,${b.data}`, detail: "auto" });
+      }
+      out.push({ role: "user", content: parts } as unknown as Item);
+      continue;
+    }
+    for (const b of blocks) {
       if (b.type === "text") out.push({ role: m.role, content: b.text });
       else if (b.type === "tool_use") out.push({ type: "function_call", call_id: b.id, name: b.name, arguments: JSON.stringify(b.input ?? {}) });
       else if (b.type === "tool_result") out.push({ type: "function_call_output", call_id: b.tool_use_id, output: b.content });

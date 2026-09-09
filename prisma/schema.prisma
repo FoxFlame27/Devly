@@ -146,6 +146,8 @@ model Message {
   content        String
   /// Ordered list of tool activity for assistant messages
   activity       Json?
+  /// Images the user attached: [{ name, type, data(base64) }]
+  attachments    Json?
   /// { created: string[], changed: string[], deleted: string[] }
   changes        Json?
   status         MessageStatus @default(COMPLETE)

@@ -16,6 +16,7 @@ function toParam(m: AIMessage): Anthropic.Beta.BetaMessageParam {
   const blocks: Anthropic.Beta.BetaContentBlockParam[] = m.content.map((b) => {
     if (b.type === "text") return { type: "text", text: b.text };
     if (b.type === "tool_use") return { type: "tool_use", id: b.id, name: b.name, input: b.input as Record<string, unknown> };
+    if (b.type === "image") return { type: "image", source: { type: "base64", media_type: b.mediaType as "image/png" | "image/jpeg" | "image/webp" | "image/gif", data: b.data } };
     return { type: "tool_result", tool_use_id: b.tool_use_id, content: b.content, is_error: b.is_error };
   });
   return { role: m.role, content: blocks };

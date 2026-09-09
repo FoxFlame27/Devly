@@ -27,6 +27,7 @@ export type RunInput = {
   effort: Effort;
   unlimited: boolean;
   userMessage: string;
+  attachments?: { name: string; type: string; data: string }[];
   runId: string;
   controller: AbortController;
   emit: (e: AgentEvent) => void;
@@ -48,7 +49,7 @@ async function loadHistory(conversationId: string): Promise<AIMessage[]> {
     where: { conversationId },
     orderBy: { createdAt: "desc" },
     take: HISTORY_MESSAGES,
-    select: { role: true, content: true, status: true },
+    select: { role: true, content: true, status: true, attachments: true },
   });
   rows.reverse();
   const out: AIMessage[] = [];
@@ -58,7 +59,10 @@ async function loadHistory(conversationId: string): Promise<AIMessage[]> {
     const role = r.role === "USER" ? "user" : "assistant";
     // The API requires alternating roles beginning with a user turn; merge same-role neighbours.
     const last = out[out.length - 1];
-    if (last && last.role === role && typeof last.content === "string") last.content += `\n\n${text}`;
+    const images = role === "user" && Array.isArray(r.attachments) ? (r.attachments as { type: string; data: string }[]).slice(0, 4) : [];
+    if (images.length) {
+      out.push({ role, content: [{ type: "text", text }, ...images.map((a) => ({ type: "image" as const, mediaType: a.type, data: a.data }))] });
+    } else if (last && last.role === role && typeof last.content === "string") last.content += `\n\n${text}`;
     else out.push({ role, content: text });
   }
   while (out.length && out[0].role !== "user") out.shift();
@@ -93,7 +97,9 @@ export async function runAgent(input: RunInput): Promise<RunOutput> {
   try {
     const history = await loadHistory(input.conversationId);
     const dynamic = await buildProjectContext(input.projectId, input.conversationId);
-    const messages: AIMessage[] = [...history, { role: "user", content: input.userMessage }];
+    const attached = (input.attachments ?? []).slice(0, 4);
+    const userContent: AIMessage["content"] = attached.length ? [{ type: "text", text: input.userMessage }, ...attached.map((a) => ({ type: "image" as const, mediaType: a.type, data: a.data }))] : input.userMessage;
+    const messages: AIMessage[] = [...history, { role: "user", content: userContent }];
     const tools = apiToolDefinitions();
     const provider = getAIProvider(input.model);
     emit({ type: "status", text: "Looking at your project..." });
