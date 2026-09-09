@@ -30,11 +30,13 @@ export async function startChallenge(user: { id: string; email: string; name: st
     console.error("[email] send failed", e);
     const detail = e instanceof Error ? e.message : String(e);
     const testMode = /only send testing emails|verify a domain/i.test(detail);
-    const dev = process.env.NODE_ENV !== "production";
+    if (process.env.NODE_ENV !== "production") {
+      // Local development: don't block on email delivery, show the code on screen instead.
+      console.log(`\n[email] (fallback) code for ${user.email}: ${code}\n`);
+      return { challengeId: ch.id, devCode: code };
+    }
     const msg = testMode
-      ? dev
-        ? "Email is in test mode: Resend only delivers to the account owner's address until a domain is verified in Resend (or Supabase OTP is configured)."
-        : "Sign-ups are temporarily limited while email delivery is being set up. Please try again later."
+      ? "Sign-ups are temporarily limited while email delivery is being set up. Please try again later."
       : "We couldn't send the code to that email address right now. Please try again in a moment.";
     throw new HttpError(502, msg, "email_failed");
   }
