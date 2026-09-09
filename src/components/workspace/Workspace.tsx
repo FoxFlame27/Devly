@@ -12,7 +12,8 @@ import { Chat } from "./Chat";
 import { PreviewPane } from "./PreviewPane";
 import { useChat } from "./useChat";
 import { usePreview } from "./usePreview";
-import { ConflictModal, HistoryModal, PublishModal, SettingsModal } from "./Dialogs";
+import { ConflictModal, HistoryModal, PublishModal } from "./Dialogs";
+import { SettingsModal } from "./SettingsModal";
 import { FileExplorer } from "./FileExplorer";
 import { CodeEditor } from "./CodeEditor";
 import { Terminal } from "./Terminal";
@@ -25,8 +26,8 @@ type MobileTab = "chat" | "preview";
 export function Workspace({ project: initialProject, user: initialUser, models, defaultModel, efforts, defaultEffort }: Props) {
   const [project, setProject] = useState(initialProject);
   const [user, setUser] = useState(initialUser);
-  const [model, setModel] = useState(defaultModel);
-  const [effort, setEffort] = useState<EffortChoice>(defaultEffort);
+  const [model, setModel] = useState(initialProject.settings?.model && models.some((m) => m.id === initialProject.settings?.model) ? initialProject.settings.model : defaultModel);
+  const [effort, setEffort] = useState<EffortChoice>((initialProject.settings?.effort as EffortChoice | undefined) ?? defaultEffort);
   const [advanced, setAdvanced] = useState(false);
   const [rightTab, setRightTab] = useState<RightTab>("preview");
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
@@ -162,20 +163,18 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
 
   const rightPanel = (
     <div className="flex h-full min-h-0 flex-col">
-      {advanced ? (
-        <div className="flex h-9 shrink-0 items-center gap-1 border-b border-line px-2 text-xs">
-          {(["preview", "code", "terminal", "logs"] as RightTab[]).map((t) => (
-            <button key={t} onClick={() => setRightTab(t)} className={`rounded-md px-2.5 py-1 capitalize ${rightTab === t ? "bg-stone-200 text-ink" : "text-muted hover:bg-stone-100"}`}>
-              {t}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <div className="flex h-9 shrink-0 items-center gap-1 border-b border-line px-2 text-xs">
+        {(advanced ? (["preview", "code", "terminal", "logs"] as RightTab[]) : (["preview", "code"] as RightTab[])).map((t) => (
+          <button key={t} onClick={() => setRightTab(t)} className={`rounded-md px-2.5 py-1 ${rightTab === t ? "bg-stone-200 text-ink" : "text-muted hover:bg-stone-100"}`}>
+            {t === "code" ? "Files" : t === "preview" ? "Preview" : t === "terminal" ? "Terminal" : "Logs"}
+          </button>
+        ))}
+      </div>
       <div className="min-h-0 flex-1">
         <div className={rightTab === "preview" ? "h-full" : "hidden"}>
           <PreviewPane projectId={project.id} info={preview.info} reloadKey={preview.reloadKey} onRefresh={preview.refresh} onRestart={preview.restart} onPublish={publish} publishing={publishing} onAskFix={askFix} advanced={advanced} aiBusy={chat.running} />
         </div>
-        {advanced && rightTab === "code" ? (
+        {rightTab === "code" ? (
           <div className="flex h-full min-h-0">
             <div className="w-56 shrink-0 border-r border-line">
               <FileExplorer projectId={project.id} selected={selectedFile} onSelect={setSelectedFile} refreshKey={filesKey} onChanged={() => setFilesKey((k) => k + 1)} />
@@ -296,7 +295,24 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
           preview.refresh();
         }}
       />
-      <SettingsModal project={project} open={settings} onClose={() => setSettings(false)} onRename={(name) => setProject((p) => ({ ...p, name }))} advanced={advanced} onAdvanced={toggleAdvanced} onSave={save} onSync={sync} saveState={saveState} />
+      <SettingsModal
+        project={project}
+        open={settings}
+        onClose={() => setSettings(false)}
+        onProject={(patch) => setProject((p) => ({ ...p, ...patch }))}
+        advanced={advanced}
+        onAdvanced={toggleAdvanced}
+        onSave={save}
+        onSync={sync}
+        saveState={saveState}
+        models={models}
+        efforts={efforts}
+        model={model}
+        effort={effort}
+        onModel={setModel}
+        onEffort={setEffort}
+        onPublish={publish}
+      />
       <PublishModal
         open={!!publishResult}
         onClose={() => setPublishResult(null)}

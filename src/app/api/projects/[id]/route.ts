@@ -17,14 +17,22 @@ export const GET = projectRoute(async (_req, { project }) => {
       updatedAt: project.updatedAt,
       publishedUrl: project.publishedSlug ? `${siteOrigin()}${getHosting().basePath(project.publishedSlug).replace(/\/$/, "")}` : null,
       publishedAt: project.publishedAt,
+      settings: project.settings,
     },
   });
 });
 
+const patchSchema = z.object({
+  name: z.string().trim().min(1).max(80).optional(),
+  description: z.string().trim().max(500).optional(),
+  settings: z.object({ model: z.string().max(80).optional(), effort: z.string().max(10).optional() }).optional(),
+});
+
 export const PATCH = projectRoute(async (req, { project }) => {
-  const body = await parseBody(req, z.object({ name: z.string().trim().min(1).max(80) }));
-  const updated = await db.project.update({ where: { id: project.id }, data: { name: body.name } });
-  return json({ project: { id: updated.id, name: updated.name } });
+  const body = await parseBody(req, patchSchema);
+  const settings = body.settings ? { ...((project.settings as object | null) ?? {}), ...body.settings } : undefined;
+  const updated = await db.project.update({ where: { id: project.id }, data: { name: body.name, description: body.description, settings } });
+  return json({ project: { id: updated.id, name: updated.name, description: updated.description, settings: updated.settings } });
 });
 
 export const DELETE = projectRoute(async (_req, { project }) => {

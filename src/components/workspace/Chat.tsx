@@ -6,6 +6,7 @@ import type { ChatMessage, ConversationSummary, EffortChoice, EffortOption, Mode
 import { Button, Spinner } from "../ui";
 import { ModelPicker } from "./ModelPicker";
 import { ArrowUp, Square } from "lucide-react";
+import { findUrls, LinkChip, TextWithLinks } from "../LinkChip";
 
 type Props = {
   messages: ChatMessage[];
@@ -131,6 +132,13 @@ export function Chat(p: Props) {
             rows={3}
             className="w-full resize-none bg-transparent px-4 pt-3 text-sm outline-none placeholder:text-stone-400"
           />
+          {findUrls(text).length ? (
+            <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+              {findUrls(text).map((u) => (
+                <LinkChip key={u} url={u} />
+              ))}
+            </div>
+          ) : null}
           <div className="flex items-center justify-between px-2 pb-2">
             <ModelPicker models={p.models} model={p.model} onModel={p.onModel} efforts={p.efforts} effort={p.effort} onEffort={p.onEffort} />
             {p.running ? (
@@ -153,7 +161,9 @@ function Message({ m, isLast, running, status, onRetry, advanced }: { m: ChatMes
   if (m.role === "USER") {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-stone-200 px-4 py-2.5 text-sm text-ink">{m.content}</div>
+        <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-stone-200 px-4 py-2.5 text-sm text-ink">
+          <TextWithLinks text={m.content} />
+        </div>
       </div>
     );
   }
@@ -165,7 +175,14 @@ function Message({ m, isLast, running, status, onRetry, advanced }: { m: ChatMes
       {m.activity && m.activity.length ? <Activity items={m.activity} advanced={advanced} /> : null}
       {m.content ? (
         <div className="prose-chat">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              a: ({ href, children }) => (href && /^https?:\/\//.test(href) ? <LinkChip url={href} label={typeof children === "string" ? children : undefined} /> : <a href={href}>{children}</a>),
+            }}
+          >
+            {m.content}
+          </ReactMarkdown>
         </div>
       ) : null}
       {active ? (

@@ -27,6 +27,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         updatedAt: project.updatedAt.toISOString(),
         publishedUrl: project.publishedSlug ? `${siteOrigin()}${getHosting().basePath(project.publishedSlug).replace(/\/$/, "")}` : null,
         publishedAt: project.publishedAt?.toISOString() ?? null,
+        settings: (project.settings as { model?: string; effort?: string } | null) ?? null,
       }}
       user={toSafeUser(user)}
       models={availableModels()}

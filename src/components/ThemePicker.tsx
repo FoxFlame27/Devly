@@ -13,6 +13,8 @@ export function applyTheme(id: ThemeId) {
   }
 }
 
+export const THEMES_LABELS = "Use the sun/moon button in the top bar to switch between light and dark.";
+
 /** One button: switches between the dark (Graphite) and light (Paper) look. */
 export function ThemePicker() {
   const [theme, setTheme] = useState<ThemeId>("paper");

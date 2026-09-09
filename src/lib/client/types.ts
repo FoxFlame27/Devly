@@ -6,7 +6,8 @@ export type EffortOption = { id: EffortChoice; label: string; description: strin
 
 export type ProjectSummary = { id: string; name: string; template: string; updatedAt: string; createdAt: string; publishedSlug: string | null; publishedAt: string | null };
 
-export type ProjectDetail = { id: string; name: string; template: string; description: string | null; updatedAt: string; publishedUrl: string | null; publishedAt: string | null };
+export type ProjectSettings = { model?: string; effort?: string };
+export type ProjectDetail = { id: string; name: string; template: string; description: string | null; updatedAt: string; publishedUrl: string | null; publishedAt: string | null; settings: ProjectSettings | null };
 
 export type FileChanges = { created: string[]; changed: string[]; deleted: string[] };
 

@@ -76,6 +76,8 @@ model Project {
   template      String    @default("website")
   ownerId       String
   owner         User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  /// { model?: string, effort?: string }
+  settings      Json?
   publishedSlug String?   @unique
   publishedAt   DateTime?
   lastOpenedAt  DateTime  @default(now())
