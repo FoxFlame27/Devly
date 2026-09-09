@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: var(--t-bg);
+  --color-surface: var(--t-surface);
+  --color-line: var(--t-line);
+  --color-ink: var(--t-ink);
+  --color-muted: var(--t-muted);
+  --color-accent: var(--t-accent);
+  --color-accent-soft: var(--t-accent-soft);
+  --color-accent-ink: var(--t-accent-ink);
+  --color-stone-50: var(--t-n50);
+  --color-stone-100: var(--t-n100);
+  --color-stone-200: var(--t-n200);
+  --color-stone-300: var(--t-n300);
+  --color-stone-400: var(--t-n400);
+  --color-stone-500: var(--t-n500);
+  --color-stone-600: var(--t-n600);
+  --color-stone-700: var(--t-n700);
+  --color-stone-800: var(--t-n800);
+  --color-stone-900: var(--t-n900);
+  --color-stone-950: var(--t-n950);
+  --color-red-50: var(--t-red-bg);
+  --color-red-100: var(--t-red-bg);
+  --color-red-200: var(--t-red-line);
+  --color-red-600: var(--t-red);
+  --color-red-700: var(--t-red);
+  --color-red-800: var(--t-red);
+  --color-green-50: var(--t-green-bg);
+  --color-green-500: var(--t-green);
+  --color-green-700: var(--t-green);
+  --color-amber-50: var(--t-amber-bg);
+  --color-amber-400: var(--t-amber);
+  --color-amber-900: var(--t-amber);
+  --font-sans: ui-sans-serif, -apple-system, "SF Pro Text", "Segoe UI", Inter, system-ui, sans-serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ---- Themes. Dark neutrals shared; each theme sets its own base colours. ---- */
+:root, [data-theme] {
+  --t-n50: #161a24; --t-n100: #1b2030; --t-n200: #242b3d; --t-n300: #303a50; --t-n400: #4b5670; --t-n500: #7a8399; --t-n600: #99a1b3; --t-n700: #b8bec9; --t-n800: #d3d7de; --t-n900: #e7e9ee; --t-n950: #f3f4f7;
+  --t-red-bg: #3a2226; --t-red-line: #5c3238; --t-red: #f38b8b; --t-green-bg: #1c3126; --t-green: #6fd39a; --t-amber-bg: #3a3120; --t-amber: #e6b453;
+  --t-code-bg: #0b0e15; --t-code-ink: #e6e8ed; --t-dots: #222838; --t-selection: #2a3f6f;
+}
+/* Graphite (default): neutral black and grey, white accent */
+:root, [data-theme="graphite"] { --t-bg: #0a0a0a; --t-surface: #141414; --t-line: #262626; --t-ink: #f2f2f2; --t-muted: #8a8a8a; --t-accent: #f2f2f2; --t-accent-soft: #262626; --t-accent-ink: #ffffff;
+  --t-n50: #141414; --t-n100: #1a1a1a; --t-n200: #262626; --t-n300: #333333; --t-n400: #525252; --t-n500: #7a7a7a; --t-n600: #999999; --t-n700: #b8b8b8; --t-n800: #d4d4d4; --t-n900: #e8e8e8; --t-n950: #f5f5f5;
+  --t-code-bg: #000; --t-code-ink: #e8e8e8; --t-selection: #3a3a3a; }
+/* Paper: light and warm */
+[data-theme="paper"] { --t-bg: #f5f3ee; --t-surface: #fffdf9; --t-line: #e4dfd5; --t-ink: #1c1a17; --t-muted: #716c63; --t-accent: #1c1a17; --t-accent-soft: #ece8df; --t-accent-ink: #1c1a17;
+  --t-n50: #faf9f6; --t-n100: #f0ede6; --t-n200: #e4e0d7; --t-n300: #d3cec3; --t-n400: #a9a396; --t-n500: #7d786e; --t-n600: #5f5b53; --t-n700: #45423c; --t-n800: #2e2c28; --t-n900: #1c1a17; --t-n950: #111;
+  --t-red-bg: #fdecec; --t-red-line: #f5c2c2; --t-red: #b42323; --t-green-bg: #e8f7ec; --t-green: #1f7a3f; --t-amber-bg: #fff4de; --t-amber: #8a5a00; --t-code-bg: #1c1a17; --t-code-ink: #f3f1ec; --t-selection: #e4e0d7; }
+
+html, body { height: 100%; }
+body { background: var(--color-bg); color: var(--color-ink); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+textarea, input, button { font: inherit; }
+::selection { background: var(--t-selection); }
+input[type="range"] { accent-color: var(--color-accent); }
+
+.font-display { font-family: var(--font-display); letter-spacing: -0.01em; }
+.paper { background-color: var(--color-bg); }
+
+.prose-chat { font-size: 0.925rem; line-height: 1.6; }
+.prose-chat p { margin: 0.35rem 0; }
+.prose-chat ul, .prose-chat ol { margin: 0.35rem 0 0.35rem 1.25rem; }
+.prose-chat ul { list-style: disc; }
+.prose-chat ol { list-style: decimal; }
+.prose-chat li { margin: 0.15rem 0; }
+.prose-chat h1, .prose-chat h2, .prose-chat h3 { font-weight: 600; margin: 0.6rem 0 0.25rem; font-size: 1rem; }
+.prose-chat code { font-family: var(--font-mono); font-size: 0.85em; background: var(--t-n200); padding: 0.1em 0.35em; border-radius: 4px; }
+.prose-chat pre { background: var(--t-code-bg); color: var(--t-code-ink); padding: 0.75rem 0.9rem; border-radius: 10px; overflow-x: auto; margin: 0.5rem 0; font-size: 0.8rem; line-height: 1.5; }
+.prose-chat pre code { background: transparent; padding: 0; color: inherit; font-size: inherit; }
+.prose-chat a { color: var(--color-accent); text-decoration: underline; }
+.prose-chat strong { font-weight: 600; }
+
+@keyframes pulse-dot { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+.dot-pulse { animation: pulse-dot 1.2s ease-in-out infinite; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rise { animation: rise 0.35s ease-out both; }
+
+.scroll-thin { scrollbar-width: thin; scrollbar-color: var(--t-n300) transparent; }
+
+.slider { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--color-accent) var(--fill, 0%), var(--t-n200) var(--fill, 0%)); outline: none; }
+.slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 999px; background: var(--color-surface); border: 3px solid var(--color-accent); box-shadow: 0 2px 10px rgba(0,0,0,0.4); cursor: grab; }
+.slider::-moz-range-thumb { width: 20px; height: 20px; border-radius: 999px; background: var(--color-surface); border: 3px solid var(--color-accent); cursor: grab; }
+.slider:active::-webkit-slider-thumb { cursor: grabbing; }
+
+.code-bg { background: var(--t-code-bg); color: var(--t-code-ink); }

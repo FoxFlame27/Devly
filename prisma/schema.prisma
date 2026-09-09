@@ -1,0 +1,216 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+enum MessageStatus {
+  COMPLETE
+  STOPPED
+  ERROR
+}
+
+enum AccessCodeType {
+  PROMPTS
+  UNLIMITED
+}
+
+enum UsageStatus {
+  COMPLETED
+  STOPPED
+  FAILED
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  passwordHash   String
+  name           String?
+  role           Role      @default(USER)
+  promptsUsed    Int       @default(0)
+  promptLimit    Int       @default(10)
+  unlimited      Boolean   @default(false)
+  unlimitedUntil DateTime?
+  disabled       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  sessions      Session[]
+  projects      Project[]
+  conversations Conversation[]
+  usages        Usage[]
+  redemptions   AccessCodeRedemption[]
+  createdCodes  AccessCode[]           @relation("CodeCreator")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Project {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  template      String    @default("website")
+  ownerId       String
+  owner         User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  publishedSlug String?   @unique
+  publishedAt   DateTime?
+  lastOpenedAt  DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  files         ProjectFile[]
+  conversations Conversation[]
+  environment   ProjectEnvironment[]
+  snapshots     Snapshot[]
+  usages        Usage[]
+
+  @@index([ownerId, updatedAt])
+}
+
+model ProjectFile {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  path      String
+  content   String
+  hash      String
+  size      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, path])
+  @@index([projectId])
+}
+
+model Conversation {
+  id        String    @id @default(cuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String    @default("New conversation")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  messages  Message[]
+
+  @@index([projectId, updatedAt])
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  conversationId String
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String
+  /// Ordered list of tool activity for assistant messages
+  activity       Json?
+  /// { created: string[], changed: string[], deleted: string[] }
+  changes        Json?
+  status         MessageStatus @default(COMPLETE)
+  model          String?
+  createdAt      DateTime      @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model Usage {
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId      String?
+  project        Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  conversationId String?
+  model          String
+  inputTokens    Int         @default(0)
+  outputTokens   Int         @default(0)
+  steps          Int         @default(0)
+  durationMs     Int         @default(0)
+  status         UsageStatus @default(COMPLETED)
+  createdAt      DateTime    @default(now())
+
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+model AccessCode {
+  id              String         @id @default(cuid())
+  codeHash        String         @unique
+  /// Last 2 characters of the plain code, for admin display only
+  hint            String
+  label           String?
+  type            AccessCodeType
+  prompts         Int            @default(0)
+  maxRedemptions  Int?
+  redemptionCount Int            @default(0)
+  expiresAt       DateTime?
+  disabled        Boolean        @default(false)
+  createdById     String?
+  createdBy       User?          @relation("CodeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(now())
+  redemptions     AccessCodeRedemption[]
+
+  @@index([disabled, expiresAt])
+}
+
+model AccessCodeRedemption {
+  id        String     @id @default(cuid())
+  codeId    String
+  code      AccessCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+
+  @@unique([codeId, userId])
+  @@index([userId])
+}
+
+model ProjectEnvironment {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  key       String
+  /// AES-256-GCM encrypted value
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, key])
+}
+
+model Snapshot {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  label     String
+  trigger   String
+  /// gzip-compressed JSON: { files: { [path]: content } }
+  data      Bytes
+  fileCount Int
+  createdAt DateTime @default(now())
+
+  @@index([projectId, createdAt])
+}
