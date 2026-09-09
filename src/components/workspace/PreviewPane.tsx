@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/client/api";
 import type { PreviewInfo } from "@/lib/client/types";
 import { Button, Spinner } from "../ui";
+import { RefreshCw } from "lucide-react";
 
 type Props = {
   projectId: string;
@@ -56,8 +57,8 @@ export function PreviewPane(p: Props) {
           <span>{statusLabel}</span>
         </div>
         <div className="flex items-center gap-1">
-          <Button size="sm" variant="ghost" onClick={p.onRefresh} disabled={!src} title="Reload the preview">
-            Refresh
+          <Button size="sm" variant="ghost" onClick={p.onRefresh} disabled={!src} title="Reload the preview" aria-label="Refresh preview">
+            <RefreshCw size={15} />
           </Button>
           <Button size="sm" variant="ghost" onClick={() => src && window.open(p.info.url!, "_blank")} disabled={!src} title="Open in a new tab">
             Open

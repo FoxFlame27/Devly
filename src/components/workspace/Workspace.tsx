@@ -6,22 +6,32 @@ import type { EffortChoice, EffortOption, ModelOption, ProjectDetail, SafeUser }
 import { Button } from "../ui";
 import { Mark } from "../ui/Mark";
 import { ThemePicker } from "../ThemePicker";
-import { MessageSquare, Eye, FolderOpen } from "lucide-react";
+import { MessageSquare, Eye, FolderOpen, Settings as SettingsIcon, Database, TerminalSquare, ScrollText } from "lucide-react";
 import { PromptCounter } from "../PromptCounter";
 import { Chat } from "./Chat";
 import { PreviewPane } from "./PreviewPane";
 import { useChat } from "./useChat";
 import { usePreview } from "./usePreview";
 import { ConflictModal, HistoryModal, PublishModal } from "./Dialogs";
-import { SettingsModal } from "./SettingsModal";
+import { SettingsPane } from "./SettingsPane";
+import { DataPane } from "./DataPane";
 import { FileExplorer } from "./FileExplorer";
 import { CodeEditor } from "./CodeEditor";
 import { Terminal } from "./Terminal";
 import { LogsPane } from "./LogsPane";
 
 type Props = { project: ProjectDetail; user: SafeUser; models: ModelOption[]; defaultModel: string; efforts: EffortOption[]; defaultEffort: EffortChoice };
-type RightTab = "preview" | "code" | "terminal" | "logs";
+type RightTab = "preview" | "code" | "settings" | "data" | "terminal" | "logs";
 type MobileTab = "chat" | "preview";
+
+const TABS: { id: RightTab; label: string; icon: React.ComponentType<{ size?: number }>; advanced?: boolean }[] = [
+  { id: "preview", label: "Preview", icon: Eye },
+  { id: "code", label: "Files", icon: FolderOpen },
+  { id: "data", label: "Database", icon: Database },
+  { id: "settings", label: "Settings", icon: SettingsIcon },
+  { id: "terminal", label: "Terminal", icon: TerminalSquare, advanced: true },
+  { id: "logs", label: "Logs", icon: ScrollText, advanced: true },
+];
 
 export function Workspace({ project: initialProject, user: initialUser, models, defaultModel, efforts, defaultEffort }: Props) {
   const [project, setProject] = useState(initialProject);
@@ -33,7 +43,6 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [saveState, setSaveState] = useState<"saved" | "saving" | "unsaved">("saved");
   const [history, setHistory] = useState(false);
-  const [settings, setSettings] = useState(false);
   const [limitOpen, setLimitOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState<{ url: string | null; error: string | null; details?: string | null } | null>(null);
@@ -163,10 +172,10 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
 
   const rightPanel = (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex h-9 shrink-0 items-center gap-1 border-b border-line px-2 text-xs">
-        {(advanced ? (["preview", "code", "terminal", "logs"] as RightTab[]) : (["preview", "code"] as RightTab[])).map((t) => (
-          <button key={t} onClick={() => setRightTab(t)} className={`rounded-md px-2.5 py-1 ${rightTab === t ? "bg-stone-200 text-ink" : "text-muted hover:bg-stone-100"}`}>
-            {t === "code" ? "Files" : t === "preview" ? "Preview" : t === "terminal" ? "Terminal" : "Logs"}
+      <div className="flex h-10 shrink-0 items-center gap-1 overflow-x-auto border-b border-line px-2 text-xs">
+        {TABS.filter((t) => !t.advanced || advanced).map((t) => (
+          <button key={t.id} onClick={() => setRightTab(t.id)} className={`flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 ${rightTab === t.id ? "bg-stone-200 text-ink" : "text-muted hover:bg-stone-100"}`}>
+            <t.icon size={14} /> {t.label}
           </button>
         ))}
       </div>
@@ -184,6 +193,25 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
             </div>
           </div>
         ) : null}
+        {rightTab === "settings" ? (
+          <SettingsPane
+            project={project}
+            onProject={(patch) => setProject((p) => ({ ...p, ...patch }))}
+            advanced={advanced}
+            onAdvanced={toggleAdvanced}
+            onSave={save}
+            onSync={sync}
+            saveState={saveState}
+            models={models}
+            efforts={efforts}
+            model={model}
+            effort={effort}
+            onModel={setModel}
+            onEffort={setEffort}
+            onPublish={publish}
+          />
+        ) : null}
+        {rightTab === "data" ? <DataPane projectId={project.id} refreshKey={filesKey} /> : null}
         {advanced && rightTab === "terminal" ? <Terminal projectId={project.id} onRan={() => setFilesKey((k) => k + 1)} /> : null}
         {advanced && rightTab === "logs" ? <LogsPane projectId={project.id} info={preview.info} /> : null}
       </div>
@@ -198,7 +226,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
           <Link href="/projects" className="rounded-lg px-2 py-1 text-sm text-muted hover:bg-stone-100 hover:text-ink" title="Back to projects">
             Projects
           </Link>
-          <button onClick={() => setSettings(true)} className="min-w-0 truncate rounded-lg px-2 py-1 text-sm font-medium hover:bg-stone-100" title="Project settings">
+          <button onClick={() => setRightTab("settings")} className="min-w-0 truncate rounded-lg px-2 py-1 text-sm font-medium hover:bg-stone-100" title="Project settings">
             {project.name}
           </button>
           <span className="hidden text-xs text-muted sm:inline">{saveState === "saved" ? "Saved" : saveState === "saving" ? "Saving..." : "Working..."}</span>
@@ -208,7 +236,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
             <Button size="sm" variant="ghost" onClick={() => setHistory(true)}>
               History
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => setSettings(true)}>
+            <Button size="sm" variant="ghost" onClick={() => setRightTab("settings")}>
               Settings
             </Button>
           </div>
@@ -294,24 +322,6 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
           setFilesKey((k) => k + 1);
           preview.refresh();
         }}
-      />
-      <SettingsModal
-        project={project}
-        open={settings}
-        onClose={() => setSettings(false)}
-        onProject={(patch) => setProject((p) => ({ ...p, ...patch }))}
-        advanced={advanced}
-        onAdvanced={toggleAdvanced}
-        onSave={save}
-        onSync={sync}
-        saveState={saveState}
-        models={models}
-        efforts={efforts}
-        model={model}
-        effort={effort}
-        onModel={setModel}
-        onEffort={setEffort}
-        onPublish={publish}
       />
       <PublishModal
         open={!!publishResult}
