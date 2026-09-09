@@ -26,7 +26,11 @@ let cached: z.infer<typeof schema> | null = null;
 /** Validated platform environment. Only ever imported from server code. */
 export function env() {
   if (cached) return cached;
-  const parsed = schema.safeParse(process.env);
+  const raw: NodeJS.ProcessEnv = { ...process.env };
+  // Fallbacks for common hosting setups so fewer settings have to be typed by hand.
+  raw.DATABASE_URL ||= process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL || process.env.DATABASE_URL_UNPOOLED;
+  if (!raw.APP_URL && process.env.VERCEL_PROJECT_PRODUCTION_URL) raw.APP_URL = `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     throw new Error(`Invalid platform configuration: ${issues}`);

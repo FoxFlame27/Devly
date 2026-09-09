@@ -12,13 +12,18 @@ const rules: Record<string, z.ZodTypeAny> = {
   SESSION_SECRET: z.string().min(32),
   ENCRYPTION_KEY: z.string().regex(/^[0-9a-f]{64}$/i),
   APP_URL: z.string().url(),
-  AI_MODELS: z.string().min(1),
 };
 
 export async function GET() {
   const problems: string[] = [];
+  const effective: Record<string, string | undefined> = {
+    DATABASE_URL: process.env.DATABASE_URL || process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL || process.env.SUPABASE_DB_URL,
+    SESSION_SECRET: process.env.SESSION_SECRET,
+    ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+    APP_URL: process.env.APP_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : undefined),
+  };
   for (const [name, schema] of Object.entries(rules)) {
-    const v = process.env[name];
+    const v = effective[name];
     if (v === undefined || v === "") problems.push(`${name} is missing`);
     else if (!schema.safeParse(v).success) problems.push(`${name} is set but not valid (${hint(name)})`);
   }
@@ -41,8 +46,9 @@ export async function GET() {
     resend: !!process.env.RESEND_API_KEY,
     supabaseOtp: !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   };
+  const detected = Object.keys(process.env).filter((k) => /^(POSTGRES_|SUPABASE_|NEXT_PUBLIC_SUPABASE_|DATABASE_|VERCEL_(ENV|URL|PROJECT_PRODUCTION_URL)$)/.test(k)).sort();
   const ok = problems.length === 0 && database.startsWith("ok");
-  return NextResponse.json({ ok, problems, database, providers, node: process.version }, { status: ok ? 200 : 503 });
+  return NextResponse.json({ ok, problems, database, providers, detectedVariables: detected, node: process.version }, { status: ok ? 200 : 503 });
 }
 
 function hint(name: string): string {
