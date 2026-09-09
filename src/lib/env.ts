@@ -16,7 +16,7 @@ const schema = z.object({
   AI_MODELS: z.string().default("claude-opus-5:Claude Opus 5:Most capable. Best for building whole features.,claude-sonnet-5:Claude Sonnet 5:Faster. Great for quick changes."),
   AI_DEFAULT_MODEL: z.string().optional(),
   AI_EFFORT: z.string().optional(),
-  SANDBOX_PROVIDER: z.enum(["auto", "local", "docker"]).default("auto"),
+  SANDBOX_PROVIDER: z.preprocess((v) => (v === "auto" || v === "local" || v === "docker" ? v : "auto"), z.enum(["auto", "local", "docker"])),
   DATA_DIR: z.string().optional(),
   NODE_ENV: z.string().default("development"),
 });
