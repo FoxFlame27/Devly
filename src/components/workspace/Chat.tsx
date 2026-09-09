@@ -5,7 +5,8 @@ import remarkGfm from "remark-gfm";
 import type { ChatMessage, ConversationSummary, EffortChoice, EffortOption, ModelOption } from "@/lib/client/types";
 import { Button, Spinner } from "../ui";
 import { ModelPicker } from "./ModelPicker";
-import { ArrowUp, Square, Trash2 } from "lucide-react";
+import { ArrowUp, Square, Trash2, Sparkles } from "lucide-react";
+import { api } from "@/lib/client/api";
 import { findUrls, LinkChip, TextWithLinks } from "../LinkChip";
 import { useAutosize } from "@/lib/client/useAutosize";
 import { ModelCard } from "./ModelCard";
@@ -51,6 +52,21 @@ type Props = {
 export function Chat(p: Props) {
   const [text, setText] = useState("");
   const [convOpen, setConvOpen] = useState(false);
+  const [improving, setImproving] = useState(false);
+  async function improve() {
+    const t = text.trim();
+    if (!t || improving) return;
+    setImproving(true);
+    try {
+      const r = await api<{ text: string }>("/api/prompt/improve", { method: "POST", json: { text: t } });
+      if (r.text) setText(r.text);
+    } catch {
+      /* keep the original text */
+    } finally {
+      setImproving(false);
+      inputRef.current?.focus();
+    }
+  }
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const stickToBottom = useRef(true);
@@ -174,7 +190,12 @@ export function Chat(p: Props) {
             </div>
           ) : null}
           <div className="flex items-center justify-between px-2 pb-2">
-            <ModelPicker models={p.models} model={p.model} onModel={p.onModel} efforts={p.efforts} effort={p.effort} onEffort={p.onEffort} />
+            <span className="flex items-center gap-1">
+              <ModelPicker models={p.models} model={p.model} onModel={p.onModel} efforts={p.efforts} effort={p.effort} onEffort={p.onEffort} />
+              <button type="button" onClick={improve} disabled={!text.trim() || improving} className="flex h-7 items-center gap-1 rounded-full px-2 text-xs text-muted hover:bg-stone-100 hover:text-ink disabled:opacity-40" title="Let AI improve your prompt">
+                {improving ? <Spinner className="size-3.5" /> : <Sparkles size={13} />} Improve
+              </button>
+            </span>
             {p.running ? (
               <span className="flex items-center gap-1">
                 <Button size="sm" variant="ghost" onClick={submit} disabled={!text.trim()} title="Add to the queue">

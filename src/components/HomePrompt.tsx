@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ArrowLeft, ArrowUp, Globe, LayoutDashboard, Gamepad2, Store, Image as ImageIcon, RefreshCw, Plus } from "lucide-react";
+import { ArrowRight, ArrowLeft, ArrowUp, Globe, LayoutDashboard, Gamepad2, Store, Image as ImageIcon, RefreshCw, Plus, Sparkles } from "lucide-react";
 import { api } from "@/lib/client/api";
 import type { SafeUser } from "@/lib/client/types";
 import { ErrorText, Spinner } from "./ui";
@@ -32,6 +32,7 @@ export function HomePrompt({ user }: { user: SafeUser | null }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exampleOffset, setExampleOffset] = useState(0);
+  const [improving, setImproving] = useState(false);
   const router = useRouter();
   const ref = useRef<HTMLTextAreaElement>(null);
   const started = useRef(false);
@@ -90,6 +91,26 @@ export function HomePrompt({ user }: { user: SafeUser | null }) {
     void build(text);
   }
 
+  async function improve() {
+    const t = prompt.trim();
+    if (!t || improving) return;
+    if (!user) {
+      router.push("/signup?next=/");
+      return;
+    }
+    setImproving(true);
+    setError(null);
+    try {
+      const r = await api<{ text: string }>("/api/prompt/improve", { method: "POST", json: { text: t } });
+      if (r.text) setPrompt(r.text);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setImproving(false);
+      ref.current?.focus();
+    }
+  }
+
   const pick = (text: string) => {
     setPrompt(text);
     ref.current?.focus();
@@ -99,7 +120,7 @@ export function HomePrompt({ user }: { user: SafeUser | null }) {
   return (
     <form onSubmit={submit} className="mx-auto w-full max-w-2xl px-4">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/devly-logo.png" alt="Devly" className="mx-auto mb-2 h-24 w-auto rounded-2xl bg-[#1f1e1b] px-6 py-2 sm:h-28" />
+      <img src="/devly-logo.png" alt="Devly" className="mx-auto mb-4 h-36 w-auto rounded-3xl bg-[#1f1e1b] px-8 py-3 sm:h-44" />
       <h1 className="font-display text-center text-[40px] font-normal leading-tight tracking-[-0.01em] sm:text-[48px]">What will you build?</h1>
       <p className="mt-3 text-center text-sm text-muted">Turn ideas into apps in minutes — no coding needed</p>
 
@@ -121,9 +142,14 @@ export function HomePrompt({ user }: { user: SafeUser | null }) {
           autoFocus
         />
         <div className="flex items-center justify-between px-3 pb-3">
-          <button type="button" onClick={() => pick(examples[0].prompt)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-stone-100 hover:text-ink" title="Insert an example">
-            <Plus size={16} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={() => pick(examples[0].prompt)} className="grid size-7 place-items-center rounded-md text-muted hover:bg-stone-100 hover:text-ink" title="Insert an example">
+              <Plus size={16} />
+            </button>
+            <button type="button" onClick={improve} disabled={!prompt.trim() || improving} className="flex h-7 items-center gap-1 rounded-md px-2 text-xs text-muted hover:bg-stone-100 hover:text-ink disabled:opacity-40" title="Let AI improve your prompt">
+              {improving ? <Spinner className="size-3.5" /> : <Sparkles size={14} />} {improving ? "Improving..." : "Improve"}
+            </button>
+          </div>
           <button type="submit" disabled={busy || !prompt.trim()} className="grid size-8 place-items-center rounded-full bg-accent text-white transition-opacity hover:opacity-90 disabled:opacity-40" aria-label="Build">
             {busy ? <Spinner className="size-4" /> : <ArrowUp size={16} />}
           </button>
