@@ -271,6 +271,34 @@ export function Chat(p: Props) {
   );
 }
 
+/** Shown when a run was stopped: what got done before stopping, so nothing looks lost. */
+function StoppedSummary({ m }: { m: ChatMessage }) {
+  const done = (m.activity ?? []).filter((a) => a.ok !== undefined && a.name !== "ask_user");
+  const unfinished = (m.activity ?? []).filter((a) => a.ok === undefined);
+  const c = m.changes;
+  const touched = c ? c.created.length + c.changed.length + c.deleted.length : 0;
+  return (
+    <div className="rounded-xl border border-line bg-surface px-3 py-2 text-sm">
+      <p className="font-medium">Stopped.</p>
+      {done.length ? (
+        <ul className="mt-1 space-y-0.5 text-xs text-muted">
+          {done.slice(-8).map((a) => (
+            <li key={a.id} className="flex items-center gap-1.5">
+              <span className={a.ok ? "text-green-600" : "text-red-600"}>{a.ok ? "✓" : "✕"}</span>
+              <span className="truncate">{a.label.replace(/\.\.\.$/, "")}</span>
+            </li>
+          ))}
+          {done.length > 8 ? <li>...and {done.length - 8} more</li> : null}
+        </ul>
+      ) : (
+        <p className="mt-1 text-xs text-muted">Nothing was changed yet.</p>
+      )}
+      {unfinished.length ? <p className="mt-1 text-xs text-muted">Interrupted while: {unfinished[unfinished.length - 1].label.replace(/\.\.\.$/, "")}.</p> : null}
+      <p className="mt-1 text-xs text-muted">{touched ? `${touched} file${touched === 1 ? "" : "s"} changed so far are kept.` : ""} Send a message to continue.</p>
+    </div>
+  );
+}
+
 function Message({ m, isLast, running, status, onRetry, advanced, projectId, onSend }: { m: ChatMessage; isLast: boolean; running: boolean; status: string | null; onRetry: () => void; advanced: boolean; projectId: string; onSend: (t: string) => void }) {
   if (m.role === "USER") {
     return (
@@ -331,7 +359,7 @@ function Message({ m, isLast, running, status, onRetry, advanced, projectId, onS
         <ModelCard key={mm.file} projectId={projectId} file={mm.file} name={mm.file.replace(/^public\/models\//, "").replace(/\.glb$/, "")} onTexture={onSend} busy={running} />
       ))}
       {hasChanges ? <ChangeSummary changes={changes} /> : null}
-      {m.status === "STOPPED" && !active ? <p className="text-xs text-muted">Stopped.</p> : null}
+      {m.status === "STOPPED" && !active ? <StoppedSummary m={m} /> : null}
       {m.error ? (
         <div className="flex items-center justify-between gap-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
           <span>{m.error}</span>

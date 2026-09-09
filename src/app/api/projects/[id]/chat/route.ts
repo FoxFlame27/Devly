@@ -101,7 +101,7 @@ export const POST = projectRoute(async (req, { user, project }) => {
         await db.message.update({
           where: { id: assistantMsg.id },
           data: {
-            content: result.text || (result.status === "STOPPED" ? "Stopped." : result.error ? "" : ""),
+            content: result.text,
             activity: result.activity as object[],
             changes: result.changes,
             status: result.status,

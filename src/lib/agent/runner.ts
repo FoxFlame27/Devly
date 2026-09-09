@@ -220,7 +220,15 @@ export async function runAgent(input: RunInput): Promise<RunOutput> {
   const info = previewInfo(input.projectId);
   emit({ type: "preview", status: info.status, url: info.url });
 
-  return { text: text.trim(), activity, changes, usage, steps, status, error, durationMs: Date.now() - started };
+  let finalText = text.trim();
+  if (!finalText && status !== "ERROR") {
+    const touched = [...changes.created, ...changes.changed, ...changes.deleted];
+    const doneSteps = activity.filter((a) => a.ok).map((a) => a.label.replace(/\.\.\.$/, ""));
+    if (status === "STOPPED") finalText = touched.length ? `Stopped before finishing. Files changed so far: ${touched.slice(0, 8).join(", ")}${touched.length > 8 ? ", ..." : ""}.` : "Stopped before making changes.";
+    else if (touched.length) finalText = `Done. Updated ${touched.slice(0, 8).join(", ")}${touched.length > 8 ? ` and ${touched.length - 8} more` : ""}.`;
+    else if (doneSteps.length) finalText = `Done. ${doneSteps.slice(-3).join("; ")}.`;
+  }
+  return { text: finalText, activity, changes, usage, steps, status, error, durationMs: Date.now() - started };
 }
 
 function detailFor(name: string, input: unknown): string | undefined {
