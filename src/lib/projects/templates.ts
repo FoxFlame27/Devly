@@ -2,7 +2,7 @@
  * Starter templates. Every template is a real, runnable Vite/Next project so the
  * live preview works before the AI has written a single line.
  */
-export type TemplateId = "website" | "react" | "nextjs";
+export type TemplateId = "website" | "react" | "nextjs" | "static";
 
 export type Template = {
   id: TemplateId;
@@ -254,7 +254,46 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   },
 };
 
-export const TEMPLATES: Record<TemplateId, Template> = { website, react, nextjs };
+/** Plain HTML/CSS/JS with no build step: previewed and published straight from the stored files. */
+const staticSite: Template = {
+  id: "static",
+  label: "Website (plain HTML)",
+  description: "HTML, CSS and JavaScript with no build step. Works everywhere, including serverless hosting.",
+  devCommand: "none",
+  buildCommand: "",
+  outputDir: ".",
+  files: {
+    "index.html": `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Website</title>
+    <link rel="stylesheet" href="styles.css" />
+    ${ERROR_REPORTER}
+  </head>
+  <body>
+    <main class="hero">
+      <h1>Your site is ready to be built</h1>
+      <p>Describe what you want in the chat and it will appear here.</p>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
+`,
+    "styles.css": `*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #0f1115; color: #e8eaf0; }
+.hero { min-height: 100vh; display: grid; place-content: center; text-align: center; padding: 2rem; }
+h1 { font-size: 2rem; margin: 0 0 0.5rem; }
+p { color: #9aa3b2; margin: 0; }
+`,
+    "app.js": `// Your site's JavaScript lives here. Use plain JS; libraries can be loaded from a CDN with a <script> tag.
+console.log("Site loaded");
+`,
+  },
+};
+
+export const TEMPLATES: Record<TemplateId, Template> = { website, react, nextjs, static: staticSite };
 
 export function getTemplate(id: string | null | undefined): Template {
   return (id && (TEMPLATES as Record<string, Template>)[id]) || TEMPLATES.website;

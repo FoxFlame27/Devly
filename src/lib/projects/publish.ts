@@ -4,6 +4,7 @@ import path from "node:path";
 import { db } from "../db";
 import { getSandbox } from "../sandbox";
 import { getHosting } from "../hosting";
+import { siteOrigin } from "../hosting/local";
 import { HttpError } from "../http";
 import { projectDir } from "../paths";
 import { randomToken } from "../crypto";
@@ -26,6 +27,11 @@ export async function publishProject(projectId: string, onProgress?: (msg: strin
   const template = getTemplate(project.template);
   const hosting = getHosting();
   const slug = project.publishedSlug ?? slugify(project.name);
+  if (template.id === "static") {
+    // No build: the site is served straight from the stored files.
+    await db.project.update({ where: { id: projectId }, data: { publishedSlug: slug, publishedAt: new Date() } });
+    return { ok: true, url: `${siteOrigin()}${hosting.basePath(slug).replace(/\/$/, "")}` };
+  }
   await materialize(projectId);
   onProgress?.("Getting things ready...");
   const install = await ensureInstalled(projectId);

@@ -1,4 +1,5 @@
 import "server-only";
+import { isServerless } from "../serverless";
 import fs from "node:fs";
 import fsp from "node:fs/promises";
 import net from "node:net";
@@ -37,6 +38,14 @@ const PORT_MIN = 4100;
 const PORT_MAX = 4999;
 const MAX_LOG_LINES = 400;
 export const PREVIEW_HOST = "127.0.0.1";
+
+/** On serverless hosts the preview is the project's own files served from the database (plain HTML projects). */
+function staticInfo(projectId: string): PreviewInfo {
+  const s = state(projectId);
+  s.status = "running";
+  s.url = `/api/projects/${projectId}/static`;
+  return { status: "running", url: s.url, port: null, lastError: null, runtimeErrors: s.runtimeErrors.slice(-5), version: s.version, uptimeMs: null };
+}
 
 function state(projectId: string): PreviewState {
   let s = registry.get(projectId);
@@ -146,6 +155,7 @@ function currentDepsHash(projectId: string): string | null {
 
 /** Installs dependencies when package.json changed or node_modules is missing. */
 export async function ensureInstalled(projectId: string, onOutput?: (line: string) => void): Promise<{ ok: boolean; output: string }> {
+  if (isServerless()) return { ok: true, output: "" };
   const s = state(projectId);
   // Tools inside the sandbox leave caches in its private HOME; they are safe to drop and disk is scarce.
   for (const junk of ["Library", "tmp", ".cache"]) fs.rmSync(path.join(projectHomeDir(projectId), junk), { recursive: true, force: true });
@@ -197,12 +207,14 @@ async function stopInternal(s: PreviewState) {
 }
 
 export async function stopPreview(projectId: string) {
+  if (isServerless()) return;
   const s = state(projectId);
   await stopInternal(s);
 }
 
 /** Starts (or restarts) the project's dev server in the sandbox. Serialised per project. */
 export async function startPreview(projectId: string): Promise<PreviewInfo> {
+  if (isServerless()) return staticInfo(projectId);
   sweepStale();
   const s = state(projectId);
   const run = async () => {
@@ -260,6 +272,7 @@ export async function startPreview(projectId: string): Promise<PreviewInfo> {
 }
 
 export async function ensureRunning(projectId: string): Promise<PreviewInfo> {
+  if (isServerless()) return staticInfo(projectId);
   const s = state(projectId);
   if (s.op) await s.op.catch(() => {});
   if (s.status === "running" && s.handle) return previewInfo(projectId);
@@ -277,6 +290,7 @@ export type PreviewInfo = {
 };
 
 export function previewInfo(projectId: string): PreviewInfo {
+  if (isServerless()) return staticInfo(projectId);
   const s = state(projectId);
   return {
     status: s.status,

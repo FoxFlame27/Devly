@@ -29,7 +29,11 @@ export async function buildProjectContext(projectId: string, conversationId: str
   const files = await listFiles(projectId);
   const parts: string[] = [];
   parts.push(`Project: "${project?.name ?? "Untitled"}"`);
-  parts.push(`Template: ${template.label} (${template.id}). Dev command: ${template.devCommand}. Build output: ${template.outputDir}/.`);
+  if (template.id === "static") {
+    parts.push("Project type: plain HTML/CSS/JS site with NO build step and no npm. index.html is the entry; link files with relative paths (styles.css, app.js). Load any library from a CDN <script>/<link> tag (e.g. Tailwind play CDN, React UMD, three.js). Do not create package.json, do not run commands. The preview shows index.html directly and refreshes when files change.");
+  } else {
+    parts.push(`Template: ${template.label} (${template.id}). Dev command: ${template.devCommand}. Build output: ${template.outputDir}/.`);
+  }
   if (project?.description) parts.push(`Original idea: ${project.description}`);
   parts.push(`Files:\n${treeLines(buildTree(files)).join("\n")}`);
   try {

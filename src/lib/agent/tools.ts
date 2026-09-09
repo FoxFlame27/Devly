@@ -10,6 +10,7 @@ import { collectPreviewErrors, ensureRunning, markInstalled, previewInfo, startP
 import { projectEnv } from "../projects/env-vars";
 import { HttpError } from "../http";
 import { generateModel, meshyConfigured, readModelsIndex, textureModel } from "../meshy";
+import { isServerless } from "../serverless";
 
 export type ToolContext = {
   projectId: string;
@@ -163,6 +164,7 @@ export const TOOLS: ToolDef[] = [
     schema: z.object({ command: z.string().min(1).max(2000), timeout_seconds: z.number().int().min(1).max(300).optional() }),
     label: (i) => (/\b(tsc|build|test|lint|vitest)\b/.test(i.command) ? "Testing..." : "Running a command..."),
     run: async (i, ctx) => {
+      if (isServerless()) return "Error: commands and npm packages aren't available on this host. This project is plain HTML/CSS/JS with no build step; load libraries from a CDN <script> tag instead.";
       let cmd: string;
       try {
         cmd = validateCommand(i.command);
@@ -181,6 +183,7 @@ export const TOOLS: ToolDef[] = [
     schema: z.object({ packages: z.array(z.string().min(1).max(214)).min(1).max(20), dev: z.boolean().optional().describe("Install as a devDependency") }),
     label: (i) => `Installing ${i.packages.join(", ")}...`,
     run: async (i, ctx) => {
+      if (isServerless()) return "Error: commands and npm packages aren't available on this host. This project is plain HTML/CSS/JS with no build step; load libraries from a CDN <script> tag instead.";
       let names: string[];
       try {
         names = i.packages.map(validatePackageName);

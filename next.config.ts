@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@prisma/client", "prisma"],
   agentRules: false,
   devIndicators: false,
+  // Static previews and published sites live under a folder-like URL; keep the trailing slash instead of redirecting.
+  skipTrailingSlashRedirect: true,
   // Keep the dev cache small: this machine has very little free disk.
   experimental: { turbopackFileSystemCacheForDev: false },
   outputFileTracingExcludes: { "*": [".data/**"] },

@@ -2,6 +2,8 @@ import fs from "node:fs";
 import fsp from "node:fs/promises";
 import path from "node:path";
 import { publishedDir } from "@/lib/paths";
+import { db } from "@/lib/db";
+import { serveProjectFile } from "@/lib/projects/static-site";
 import { env } from "@/lib/env";
 import { siteOrigin } from "@/lib/hosting/local";
 
@@ -24,7 +26,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     return Response.redirect(`${siteOrigin()}${url.pathname}${url.search}`, 307);
   }
   const root = path.join(publishedDir(), slug);
-  if (!fs.existsSync(root)) return new Response("This site isn't published.", { status: 404 });
+  if (!fs.existsSync(root)) {
+    // Plain HTML projects (and serverless hosts) publish straight from the database.
+    const project = await db.project.findFirst({ where: { publishedSlug: slug }, select: { id: true } });
+    if (!project) return new Response("This site isn't published.", { status: 404 });
+    return serveProjectFile(project.id, parts, { cache: "public, max-age=60", base: `/site/${slug}/` });
+  }
   if (parts.some((p) => p === ".." || p.includes("\0"))) return new Response("Not found", { status: 404 });
   let target = path.resolve(root, ...parts);
   if (!target.startsWith(root + path.sep) && target !== root) return new Response("Not found", { status: 404 });
