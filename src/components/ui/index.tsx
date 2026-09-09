@@ -6,7 +6,7 @@ import { Mark } from "./Mark";
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-accent text-white hover:opacity-90 disabled:bg-stone-300 disabled:text-stone-500 disabled:opacity-100",
+  primary: "bg-accent text-white hover:brightness-95 disabled:bg-stone-300 disabled:text-stone-500",
   secondary: "bg-surface border border-line text-ink hover:bg-stone-50 disabled:text-stone-400",
   ghost: "text-muted hover:bg-stone-100 hover:text-ink disabled:text-stone-300",
   danger: "bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300",

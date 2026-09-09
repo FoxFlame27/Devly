@@ -119,11 +119,11 @@ export function AppShell({ user: initialUser, projects, children, active = "home
 
   return (
     <div className="flex min-h-screen">
-      <aside className={`hidden shrink-0 border-r border-line bg-surface transition-[width] md:block ${open ? "w-64" : "w-0 overflow-hidden border-r-0"}`}>{nav}</aside>
+      <aside className={`hidden shrink-0 border-r border-line bg-sidebar transition-[width] md:block ${open ? "w-64" : "w-0 overflow-hidden border-r-0"}`}>{nav}</aside>
       {mobileOpen ? (
         <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMobileOpen(false)}>
           <div className="absolute inset-0 bg-black/60" />
-          <aside className="absolute inset-y-0 left-0 w-72 bg-surface" onClick={(e) => e.stopPropagation()}>
+          <aside className="absolute inset-y-0 left-0 w-72 bg-sidebar" onClick={(e) => e.stopPropagation()}>
             {nav}
           </aside>
         </div>

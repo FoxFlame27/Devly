@@ -96,10 +96,10 @@ export function HomePrompt({ user }: { user: SafeUser | null }) {
 
   return (
     <form onSubmit={submit} className="mx-auto w-full max-w-2xl px-4">
-      <h1 className="text-center text-[44px] font-normal leading-tight tracking-[-0.02em] sm:text-[56px]">What will you build?</h1>
+      <h1 className="font-display text-center text-[40px] font-normal leading-tight tracking-[-0.01em] sm:text-[48px]">What will you build?</h1>
       <p className="mt-3 text-center text-sm text-muted">Turn ideas into apps in minutes — no coding needed</p>
 
-      <div className="mt-8 rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)] focus-within:border-stone-400">
+      <div className="mt-8 rounded-2xl border border-line bg-surface shadow-[0_8px_30px_-16px_rgba(0,0,0,0.4)] focus-within:border-stone-400">
         <textarea
           ref={ref}
           value={prompt}

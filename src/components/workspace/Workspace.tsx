@@ -50,6 +50,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
     });
   };
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
+  const [panelOpen, setPanelOpen] = useState(true);
   const [saveState, setSaveState] = useState<"saved" | "saving" | "unsaved">("saved");
   const [history, setHistory] = useState(false);
   const [limitOpen, setLimitOpen] = useState(false);
@@ -241,7 +242,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
 
   return (
     <div className="flex h-dvh flex-col bg-bg">
-      <header className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-line bg-surface px-3">
+      <header className="flex h-12 shrink-0 items-center justify-between gap-2 px-3">
         <div className="flex min-w-0 items-center gap-2">
           <Link href="/" className="mr-1 shrink-0" aria-label="Y 5 home"><Mark size={26} /></Link>
           <Link href="/projects" className="rounded-lg px-2 py-1 text-sm text-muted hover:bg-stone-100 hover:text-ink" title="Back to projects">
@@ -254,6 +255,9 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
         </div>
         <div className="flex items-center gap-1">
           <div className="hidden items-center gap-1 md:flex">
+            <Button size="sm" variant="ghost" onClick={() => setPanelOpen((o) => !o)} title={panelOpen ? "Hide the side panel" : "Show the preview"}>
+              {panelOpen ? "Hide preview" : "Show preview"}
+            </Button>
             <Button size="sm" variant="ghost" onClick={() => setHistory(true)}>
               History
             </Button>
@@ -268,7 +272,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
 
       {/* Desktop */}
       <div className="hidden min-h-0 flex-1 md:flex">
-        <div className="w-[38%] min-w-[340px] max-w-[560px] border-r border-line bg-surface">
+        <div className="min-w-[380px] flex-1">
           <Chat
             messages={chat.messages}
             conversations={chat.conversations}
@@ -291,7 +295,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
             advanced={advanced}
           />
         </div>
-        <div className="min-w-0 flex-1">{rightPanel}</div>
+        {panelOpen ? <div className="my-3 mr-3 w-[46%] min-w-[420px] overflow-hidden rounded-2xl border border-line bg-surface">{rightPanel}</div> : null}
       </div>
 
       {/* Mobile */}

@@ -12,7 +12,7 @@ export function TopNav() {
         <Link href="/login" className="rounded-lg px-3 py-1.5 text-sm text-ink hover:bg-stone-100">
           Log in
         </Link>
-        <Link href="/signup" className="rounded-full border border-ink px-4 py-1.5 text-sm text-ink hover:bg-stone-100">
+        <Link href="/signup" className="rounded-full bg-accent px-4 py-1.5 text-sm text-white hover:brightness-95">
           Create account
         </Link>
       </nav>
