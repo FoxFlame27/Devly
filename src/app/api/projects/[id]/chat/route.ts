@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
+import { after } from "next/server";
 import { db } from "@/lib/db";
 import { enforceRateLimit, HttpError, parseBody } from "@/lib/http";
 import { projectRoute } from "@/lib/api/project-route";
@@ -77,6 +78,9 @@ export const POST = projectRoute(async (req, { user, project }) => {
       }, 15000);
       send({ type: "run", runId, conversationId: cid, messageId: assistantMsg.id });
 
+      let finished!: () => void;
+      const done = new Promise<void>((r) => (finished = r));
+      after(() => done); // serverless hosts: don't freeze the function when the stream is cancelled
       (async () => {
         const result = await runAgent({
           projectId: project.id,
@@ -126,7 +130,7 @@ export const POST = projectRoute(async (req, { user, project }) => {
         } catch {
           /* closed */
         }
-      })().catch((e) => {
+      })().finally(() => finished()).catch((e) => {
         console.error("[chat] run failed", e);
         send({ type: "error", message: "Something went wrong. Please try again.", retryable: true });
         clearInterval(heartbeat);

@@ -89,3 +89,7 @@ input[type="range"] { accent-color: var(--color-accent); }
 .slider:active::-webkit-slider-thumb { cursor: grabbing; }
 
 .code-bg { background: var(--t-code-bg); color: var(--t-code-ink); }
+
+/* Top navigation progress bar */
+@keyframes nav-progress { 0% { width: 0; } 50% { width: 65%; } 85% { width: 90%; } 100% { width: 96%; } }
+.nav-progress-run { animation: nav-progress 6s ease-out forwards; }

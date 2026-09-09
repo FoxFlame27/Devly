@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
 import { friendlyOtpError, getSupabase, supabaseConfigured } from "@/lib/client/supabase";
-import { Button, ErrorText, Field, inputClass } from "./ui";
+import { Button, ErrorText, Field, inputClass, Spinner } from "./ui";
+import { setNavLoading } from "./NavProgress";
+import { CheckCircle2 } from "lucide-react";
 
 type Verify = { provider?: "supabase"; challengeId?: string; email: string; masked?: string; devCode?: string };
 const RESEND_COOLDOWN = 15;
@@ -19,6 +21,7 @@ export function ForgotForm() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  const [done, setDone] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -65,6 +68,8 @@ export function ForgotForm() {
       } else {
         await api("/api/auth/reset-password", { method: "POST", json: { challengeId: verify.challengeId, code, password } });
       }
+      setDone(true);
+      setNavLoading(true);
       router.push("/projects");
       router.refresh();
     } catch (err) {
@@ -90,7 +95,13 @@ export function ForgotForm() {
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/devly-logo.png" alt="Devly" className="mb-8 h-20 w-auto rounded-2xl bg-[#1f1e1b] px-6 py-2" />
-      {verify ? (
+      {done ? (
+        <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-line bg-surface p-8 text-center">
+          <CheckCircle2 className="text-green-600" size={36} />
+          <p className="text-base font-medium">Password changed. Logging you in...</p>
+          <Spinner className="size-4" />
+        </div>
+      ) : verify ? (
         <form onSubmit={submitReset} className="w-full max-w-sm space-y-4 rounded-2xl border border-line bg-surface p-6">
           <h1 className="text-lg font-semibold">Set a new password</h1>
           <p className="text-sm text-muted">

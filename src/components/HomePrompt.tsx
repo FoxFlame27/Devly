@@ -7,6 +7,7 @@ import type { SafeUser } from "@/lib/client/types";
 import { ErrorText, Spinner } from "./ui";
 import { IDEAS } from "./HomeExtras";
 import { useAutosize } from "@/lib/client/useAutosize";
+import { setNavLoading } from "./NavProgress";
 
 const PENDING_KEY = "bb.pendingPrompt";
 
@@ -44,6 +45,7 @@ export function HomePrompt({ user }: { user: SafeUser | null }) {
     try {
       const r = await api<{ project: { id: string } }>("/api/projects", { method: "POST", json: { prompt: text } });
       stashInitialPrompt(r.project.id, text);
+      setNavLoading(true);
       router.push(`/p/${r.project.id}`);
     } catch (e) {
       setError((e as Error).message);

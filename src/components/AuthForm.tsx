@@ -4,7 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
 import { friendlyOtpError, getSupabase, signInWithGoogle, supabaseConfigured } from "@/lib/client/supabase";
-import { Button, ErrorText, Field, inputClass } from "./ui";
+import { Button, ErrorText, Field, inputClass, Spinner } from "./ui";
+import { setNavLoading } from "./NavProgress";
+import { CheckCircle2 } from "lucide-react";
 
 type Verify = { provider?: "supabase"; challengeId?: string; email: string; masked?: string; devCode?: string; devReason?: string };
 
@@ -20,6 +22,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [info, setInfo] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
   const googleAvailable = supabaseConfigured();
   const router = useRouter();
   const params = useSearchParams();
@@ -32,6 +35,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }, [cooldown]);
 
   function finish() {
+    setDone(mode === "signup" ? "Account created. Opening your projects..." : "Logged in. Opening your projects...");
+    setNavLoading(true);
     router.push(next.startsWith("/") ? next : "/projects");
     router.refresh();
   }
@@ -110,7 +115,13 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/devly-logo.png" alt="Devly" className="mb-8 h-20 w-auto rounded-2xl bg-[#1f1e1b] px-6 py-2" />
-      {verify ? (
+      {done ? (
+        <div className="flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-line bg-surface p-8 text-center">
+          <CheckCircle2 className="text-green-600" size={36} />
+          <p className="text-base font-medium">{done}</p>
+          <Spinner className="size-4" />
+        </div>
+      ) : verify ? (
         <form onSubmit={submitCode} className="w-full max-w-sm space-y-4 rounded-2xl border border-line bg-surface p-6">
           <h1 className="text-lg font-semibold">Check your email</h1>
           <p className="text-sm text-muted">

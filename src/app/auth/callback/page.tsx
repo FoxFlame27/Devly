@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { api } from "@/lib/client/api";
 import { Spinner } from "@/components/ui";
+import { setNavLoading } from "@/components/NavProgress";
 
 /** Landing page after Google sign-in: turns Supabase's token into a Devly session. */
 function Callback() {
@@ -23,6 +24,7 @@ function Callback() {
         await api("/api/auth/supabase", { method: "POST", json: { accessToken } });
         const next = params.get("next") || "/projects";
         window.history.replaceState(null, "", window.location.pathname);
+        setNavLoading(true);
         router.replace(next.startsWith("/") ? next : "/projects");
         router.refresh();
       } catch (e) {
@@ -44,7 +46,7 @@ function Callback() {
         </div>
       ) : (
         <div className="flex items-center gap-2 text-sm text-muted">
-          <Spinner className="size-4" /> Signing you in...
+          <Spinner className="size-4" /> Logged in with Google. Opening your projects...
         </div>
       )}
     </div>
