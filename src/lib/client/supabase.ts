@@ -28,7 +28,9 @@ export function getSupabase(): SupabaseClient {
 export function friendlyOtpError(message: string): string {
   const m = message.toLowerCase();
   if (m.includes("expired") || m.includes("invalid")) return "That code is wrong or has expired. Check the newest email or send a new code.";
-  if (m.includes("rate limit") || m.includes("too many") || m.includes("security purposes")) return "Too many attempts. Please wait a minute and try again.";
+  if (m.includes("email rate limit")) return "The email service has hit its hourly sending limit. Please try again later.";
+  if (m.includes("security purposes")) return "Please wait a moment before requesting another code.";
+  if (m.includes("rate limit") || m.includes("too many")) return "Too many attempts. Please wait a minute and try again.";
   if (m.includes("signups not allowed")) return "Sign-ups are currently disabled.";
   return message;
 }
