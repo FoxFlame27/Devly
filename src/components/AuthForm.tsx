@@ -1,11 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
+import { friendlyOtpError, getSupabase, supabaseConfigured } from "@/lib/client/supabase";
 import { Button, ErrorText, Field, inputClass, Logo } from "./ui";
 
-type Verify = { challengeId: string; email: string; devCode?: string };
+type Verify = { provider?: "supabase"; challengeId?: string; email: string; masked?: string; devCode?: string };
+
+const RESEND_COOLDOWN = 30;
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [email, setEmail] = useState("");
@@ -15,13 +18,27 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/projects";
 
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
   function finish() {
     router.push(next.startsWith("/") ? next : "/projects");
     router.refresh();
+  }
+
+  /** Asks Supabase to email a 6-digit code. */
+  async function sendSupabaseCode(to: string) {
+    if (!supabaseConfigured()) throw new Error("Email verification isn't configured.");
+    const { error: e } = await getSupabase().auth.signInWithOtp({ email: to, options: { shouldCreateUser: true } });
+    if (e) throw new Error(friendlyOtpError(e.message));
   }
 
   async function submit(e: React.FormEvent) {
@@ -30,8 +47,14 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     setError(null);
     try {
       const r = await api<{ user?: unknown; verify?: Verify }>(`/api/auth/${mode}`, { method: "POST", json: { email, password } });
-      if (r.verify) setVerify(r.verify);
-      else finish();
+      if (r.verify?.provider === "supabase") {
+        await sendSupabaseCode(r.verify.email);
+        setVerify(r.verify);
+        setCooldown(RESEND_COOLDOWN);
+      } else if (r.verify) {
+        setVerify(r.verify);
+        setCooldown(RESEND_COOLDOWN);
+      } else finish();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -45,10 +68,17 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     setBusy(true);
     setError(null);
     try {
-      await api(`/api/auth/verify`, { method: "POST", json: { challengeId: verify.challengeId, code } });
+      if (verify.provider === "supabase") {
+        const { data, error: e2 } = await getSupabase().auth.verifyOtp({ email: verify.email, token: code, type: "email" });
+        if (e2 || !data.session) throw new Error(friendlyOtpError(e2?.message ?? "No session"));
+        await api(`/api/auth/supabase`, { method: "POST", json: { accessToken: data.session.access_token, ...(mode === "signup" ? { password } : {}) } });
+        await getSupabase().auth.signOut().catch(() => {});
+      } else {
+        await api(`/api/auth/verify`, { method: "POST", json: { challengeId: verify.challengeId, code } });
+      }
       finish();
     } catch (err) {
-      const msg = (err as Error & { code?: string }).message;
+      const msg = (err as Error).message;
       setError(msg);
       if ((err as { code?: string }).code === "challenge_expired") setVerify(null);
       setBusy(false);
@@ -56,17 +86,23 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   }
 
   async function resend() {
-    if (!verify) return;
+    if (!verify || cooldown > 0) return;
     setInfo(null);
     setError(null);
     try {
-      const r = await api<{ verify: Verify }>(`/api/auth/resend`, { method: "POST", json: { challengeId: verify.challengeId } });
-      setVerify(r.verify);
+      if (verify.provider === "supabase") await sendSupabaseCode(verify.email);
+      else {
+        const r = await api<{ verify: Verify }>(`/api/auth/resend`, { method: "POST", json: { challengeId: verify.challengeId } });
+        setVerify(r.verify);
+      }
+      setCooldown(RESEND_COOLDOWN);
       setInfo("A new code is on its way.");
     } catch (err) {
       setError((err as Error).message);
     }
   }
+
+  const shownEmail = verify?.masked ?? verify?.email ?? "";
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
@@ -75,7 +111,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         <form onSubmit={submitCode} className="w-full max-w-sm space-y-4 rounded-2xl border border-line bg-surface p-6">
           <h1 className="text-lg font-semibold">Check your email</h1>
           <p className="text-sm text-muted">
-            We sent a 6-digit code to <span className="text-ink">{verify.email}</span>. Enter it to continue.
+            We sent a 6-digit code to <span className="text-ink">{shownEmail}</span>. Enter it to continue.
           </p>
           {verify.devCode ? (
             <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
@@ -91,8 +127,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
             Verify
           </Button>
           <div className="flex justify-between text-sm text-muted">
-            <button type="button" onClick={resend} className="hover:text-ink">
-              Send a new code
+            <button type="button" onClick={resend} disabled={cooldown > 0} className="hover:text-ink disabled:cursor-default disabled:opacity-60">
+              {cooldown > 0 ? `Send a new code (${cooldown}s)` : "Send a new code"}
             </button>
             <button
               type="button"

@@ -5,6 +5,7 @@ import { signupSchema } from "@/lib/auth/validation";
 import { createSession, toSafeUser } from "@/lib/auth/session";
 import { emailVerificationEnabled } from "@/lib/email";
 import { maskEmail, startChallenge } from "@/lib/auth/challenge";
+import { supabaseServerConfigured } from "@/lib/auth/supabase-server";
 
 export const POST = handler(async (req) => {
   assertSameOrigin(req);
@@ -13,6 +14,9 @@ export const POST = handler(async (req) => {
   const existing = await db.user.findUnique({ where: { email: body.email } });
   if (existing) throw new HttpError(409, "An account with that email already exists. Try signing in.");
   const user = await db.user.create({ data: { email: body.email, passwordHash: await hashPassword(body.password), name: body.name || null } });
+  if (emailVerificationEnabled() && supabaseServerConfigured()) {
+    return json({ verify: { provider: "supabase", email: user.email, masked: maskEmail(user.email) } }, { status: 201 });
+  }
   if (emailVerificationEnabled()) {
     const ch = await startChallenge(user);
     return json({ verify: { challengeId: ch.challengeId, email: maskEmail(user.email), devCode: ch.devCode } }, { status: 201 });
