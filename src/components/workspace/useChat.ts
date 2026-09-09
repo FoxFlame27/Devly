@@ -23,6 +23,7 @@ type Handlers = { onDone: (r: { changes: FileChanges; promptsRemaining: number |
 export function useChat(projectId: string, handlers: Handlers) {
   const [state, setState] = useState<ChatState>({ conversations: [], conversationId: null, messages: [], running: false, status: null, error: null, lastPrompt: null, queue: [] });
   const queueRef = useRef<ChatState["queue"]>([]);
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendRef = useRef<(text: string, model?: string | null, effort?: string | null, attachments?: Attachment[]) => Promise<void>>(async () => {});
   const runId = useRef<string | null>(null);
   const abort = useRef<AbortController | null>(null);
@@ -44,7 +45,31 @@ export function useChat(projectId: string, handlers: Handlers) {
         return;
       }
       const r = await api<{ messages: ChatMessage[] }>(`/api/projects/${projectId}/conversations/${id}`);
-      setState((s) => ({ ...s, conversationId: id, messages: r.messages.filter((m) => m.role === "USER" || m.content || m.activity), error: null }));
+      const msgs = r.messages.filter((m) => m.role === "USER" || m.content || m.activity || m.status === "RUNNING");
+      const last = msgs[msgs.length - 1];
+      const stillRunning = !!last && last.role === "ASSISTANT" && last.status === "RUNNING" && !runId.current;
+      setState((s) => ({ ...s, conversationId: id, messages: stillRunning ? msgs.map((m) => (m === last ? { ...m, pending: true } : m)) : msgs, error: null, running: stillRunning ? true : s.running, status: stillRunning ? "Still working... (you can leave this page, progress is saved)" : s.status }));
+      if (pollTimer.current) clearTimeout(pollTimer.current);
+      if (stillRunning) {
+        // The run is on a server we can't stream from (or we just reloaded): poll until it finishes.
+        const poll = async () => {
+          try {
+            const rr = await api<{ messages: ChatMessage[] }>(`/api/projects/${projectId}/conversations/${id}`);
+            const l = rr.messages[rr.messages.length - 1];
+            const done = !l || l.role !== "ASSISTANT" || l.status !== "RUNNING";
+            setState((s) => ({ ...s, messages: rr.messages.map((m) => (m === l && !done ? { ...m, pending: true } : m)), running: done ? false : s.running, status: done ? null : s.status }));
+            if (done) {
+              pollTimer.current = null;
+              h.current.onDone({ changes: l?.changes ?? { created: [], changed: [], deleted: [] }, promptsRemaining: null });
+              return;
+            }
+          } catch {
+            /* try again */
+          }
+          pollTimer.current = setTimeout(poll, 3000);
+        };
+        pollTimer.current = setTimeout(poll, 3000);
+      }
     },
     [projectId],
   );
@@ -185,8 +210,14 @@ export function useChat(projectId: string, handlers: Handlers) {
 
   const stop = useCallback(async () => {
     const id = runId.current;
-    if (id) await api(`/api/projects/${projectId}/chat/stop`, { method: "POST", json: { runId: id } }).catch(() => {});
-    setState((s) => ({ ...s, status: "Stopping..." }));
+    // Stop right away in the UI; the server winds down in the background and saves what was done.
+    if (id) api(`/api/projects/${projectId}/chat/stop`, { method: "POST", json: { runId: id } }).catch(() => {});
+    if (abort.current) abort.current.abort();
+    else {
+      if (pollTimer.current) clearTimeout(pollTimer.current);
+      pollTimer.current = null;
+      setState((s) => ({ ...s, running: false, status: null, messages: s.messages.map((m) => (m.pending ? { ...m, pending: false, status: "STOPPED" } : m)) }));
+    }
   }, [projectId]);
 
   const newConversation = useCallback(async () => {

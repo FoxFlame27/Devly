@@ -19,7 +19,7 @@ export type ChatMessage = {
   content: string;
   activity?: ActivityItem[] | null;
   changes?: FileChanges | null;
-  status?: "COMPLETE" | "STOPPED" | "ERROR";
+  status?: "RUNNING" | "COMPLETE" | "STOPPED" | "ERROR";
   createdAt?: string;
   /** Images attached to a user message */
   attachments?: { name: string; type: string; data: string }[] | null;

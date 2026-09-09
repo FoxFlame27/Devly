@@ -45,7 +45,7 @@ export const POST = projectRoute(async (req, { user, project }) => {
   await consumePrompt(user);
 
   const userMsg = await db.message.create({ data: { conversationId, role: "USER", content: body.message, attachments: body.attachments?.length ? body.attachments : undefined } });
-  const assistantMsg = await db.message.create({ data: { conversationId, role: "ASSISTANT", content: "", status: "COMPLETE", model } });
+  const assistantMsg = await db.message.create({ data: { conversationId, role: "ASSISTANT", content: "", status: "RUNNING", model } });
   await db.conversation.update({ where: { id: conversationId }, data: { updatedAt: new Date() } });
   await materialize(project.id);
 
@@ -58,7 +58,34 @@ export const POST = projectRoute(async (req, { user, project }) => {
   const stream = new ReadableStream<Uint8Array>({
     start(ctrl) {
       let closed = false;
+      // Progress is saved to the database as it happens, so reloading the page shows it.
+      let partialText = "";
+      const partialActivity: { id: string; name: string; label: string; detail?: string; ok?: boolean; summary?: string }[] = [];
+      let saveTimer: ReturnType<typeof setTimeout> | null = null;
+      let finalSaved = false;
+      const saveProgress = () => {
+        if (saveTimer || finalSaved) return;
+        saveTimer = setTimeout(() => {
+          saveTimer = null;
+          if (finalSaved) return;
+          db.message.update({ where: { id: assistantMsg.id }, data: { content: partialText, activity: partialActivity as object[] } }).catch(() => {});
+        }, 1500);
+      };
       const send = (e: AgentEvent) => {
+        if (e.type === "text") {
+          partialText += e.delta;
+          saveProgress();
+        } else if (e.type === "tool_start") {
+          partialActivity.push({ id: e.id, name: e.name, label: e.label, detail: e.detail });
+          saveProgress();
+        } else if (e.type === "tool_end") {
+          const a = partialActivity.find((x) => x.id === e.id);
+          if (a) {
+            a.ok = e.ok;
+            a.summary = e.summary;
+          }
+          saveProgress();
+        }
         publish(runId, e);
         if (closed) return;
         try {
@@ -98,6 +125,8 @@ export const POST = projectRoute(async (req, { user, project }) => {
         });
         const didWork = result.steps > 0 && (result.text.length > 0 || result.activity.length > 0);
         if (result.status === "ERROR" && !didWork) await refundPrompt(user);
+        finalSaved = true;
+        if (saveTimer) clearTimeout(saveTimer);
         await db.message.update({
           where: { id: assistantMsg.id },
           data: {

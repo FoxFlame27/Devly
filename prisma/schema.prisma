@@ -18,6 +18,7 @@ enum MessageRole {
 }
 
 enum MessageStatus {
+  RUNNING
   COMPLETE
   STOPPED
   ERROR

@@ -5,6 +5,7 @@ import { projectRoute } from "@/lib/api/project-route";
 export const GET = projectRoute(async (_req, { project, params }) => {
   const c = await db.conversation.findFirst({ where: { id: params.cid, projectId: project.id } });
   if (!c) throw new HttpError(404, "Conversation not found.");
+  await db.message.updateMany({ where: { conversationId: c.id, status: "RUNNING", createdAt: { lt: new Date(Date.now() - 30 * 60 * 1000) } }, data: { status: "STOPPED" } });
   const messages = await db.message.findMany({
     where: { conversationId: c.id },
     orderBy: { createdAt: "asc" },
