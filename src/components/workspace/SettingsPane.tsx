@@ -6,12 +6,15 @@ import type { EffortChoice, EffortOption, ModelOption, ProjectDetail } from "@/l
 import { Button, ErrorText, Field, inputClass } from "../ui";
 import { Trash2 } from "lucide-react";
 import { GithubSection } from "./GithubSection";
+import { HostingSection } from "./HostingSection";
+import type { useHosting } from "@/lib/client/useHosting";
 import type { useGithub } from "@/lib/client/useGithub";
 
 type EnvRow = { key: string; preview: string; updatedAt: string };
 
 export type SettingsProps = {
   github: ReturnType<typeof useGithub>;
+  hosting: ReturnType<typeof useHosting>;
   onFilesChanged: () => void;
   project: ProjectDetail;
   onProject: (patch: Partial<ProjectDetail>) => void;
@@ -158,6 +161,9 @@ export function SettingsPane(p: SettingsProps) {
           </div>
         </Section>
 
+        <Section title="Hosting" text="Put this project online on your own Vercel account, with your own domain.">
+          <HostingSection projectId={p.project.id} hosting={p.hosting} />
+        </Section>
         <Section title="GitHub" text="Push this project to a repository, or pull changes made elsewhere.">
           <GithubSection projectId={p.project.id} gh={p.github} onFilesChanged={p.onFilesChanged} />
         </Section>

@@ -85,6 +85,7 @@ export async function runAgent(input: RunInput): Promise<RunOutput> {
 
   const ctx: ToolContext = {
     projectId: input.projectId,
+    userId: input.userId,
     template: input.template,
     signal: controller.signal,
     changes,

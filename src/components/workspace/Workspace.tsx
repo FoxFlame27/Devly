@@ -17,6 +17,8 @@ import { SettingsPane } from "./SettingsPane";
 import { DataPane } from "./DataPane";
 import { AskPane } from "./AskPane";
 import { useGithub } from "@/lib/client/useGithub";
+import { useHosting } from "@/lib/client/useHosting";
+import { Rocket } from "lucide-react";
 import { GitBranch, Upload, Download } from "lucide-react";
 import { FileExplorer } from "./FileExplorer";
 import { CodeEditor } from "./CodeEditor";
@@ -56,6 +58,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
   const [saveState, setSaveState] = useState<"saved" | "saving" | "unsaved">("saved");
   const [history, setHistory] = useState(false);
   const github = useGithub(project.id);
+  const hosting = useHosting(project.id);
   const [limitOpen, setLimitOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState<{ url: string | null; error: string | null; details?: string | null } | null>(null);
@@ -209,6 +212,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
         {rightTab === "settings" ? (
           <SettingsPane
             github={github}
+            hosting={hosting}
             onFilesChanged={() => setFilesKey((k) => k + 1)}
             project={project}
             onProject={(patch) => setProject((p) => ({ ...p, ...patch }))}
@@ -263,6 +267,12 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
             <Button size="sm" variant="ghost" onClick={() => setPanelOpen((o) => !o)} title={panelOpen ? "Hide the side panel" : "Show the preview"}>
               {panelOpen ? "Hide preview" : "Show preview"}
             </Button>
+            {hosting.tokenConnected ? (
+              <Button size="sm" variant="ghost" loading={!!hosting.deploying} disabled={!!hosting.deploying || chat.running} onClick={() => hosting.deploy()} title={hosting.info?.url ? `Deploy again (${hosting.info.url})` : "Deploy to your Vercel account"}>
+                <Rocket size={13} /> {hosting.deploying ? hosting.deploying : "Deploy"}
+              </Button>
+            ) : null}
+            {hosting.message && !hosting.deploying ? <span className={`max-w-[260px] truncate text-xs ${hosting.message.kind === "ok" ? "text-green-700" : "text-red-600"}`}>{hosting.message.text}</span> : null}
             {github.status?.repo ? (
               <span className="flex items-center gap-0.5 rounded-full border border-line px-1" title={`GitHub: ${github.status.repo}`}>
                 <GitBranch size={13} className="ml-1 text-muted" />

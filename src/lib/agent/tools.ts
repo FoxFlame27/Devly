@@ -11,9 +11,12 @@ import { projectEnv } from "../projects/env-vars";
 import { HttpError } from "../http";
 import { generateModel, meshyConfigured, readModelsIndex, textureModel } from "../meshy";
 import { isServerless } from "../serverless";
+import { attachDomain, checkDomain, deployToVercel } from "../projects/deploy";
+import dns from "node:dns/promises";
 
 export type ToolContext = {
   projectId: string;
+  userId: string;
   template: string;
   signal: AbortSignal;
   changes: FileChanges;
@@ -308,6 +311,62 @@ const MODEL_TOOLS: ToolDef[] = [
   }),
 ];
 TOOLS.push(...MODEL_TOOLS);
+
+const HOSTING_TOOLS: ToolDef[] = [
+  def({
+    name: "deploy_project",
+    description: "Deploys the project to the user's own hosting (Vercel) and returns the public URL. Use when the user asks to deploy, host, put online, or go live. Needs the user's Vercel token (Settings → Hosting); if missing, tell them to add it.",
+    schema: z.object({}),
+    label: () => "Deploying...",
+    run: async (_i, ctx) => {
+      const r = await deployToVercel(ctx.projectId, ctx.userId, (m) => ctx.status?.(m), ctx.signal);
+      if (!r.ok) return `Error: the deploy failed: ${r.error}\n\nBuild log (last lines):\n${r.logs.slice(-3000)}`;
+      return `Deployed. Live at ${r.url}`;
+    },
+  }),
+  def({
+    name: "add_custom_domain",
+    description: "Connects a domain the user owns (e.g. mysite.com or app.mysite.com) to the deployed project and returns the DNS records they must add at their registrar. Deploy first.",
+    schema: z.object({ domain: z.string().min(3).max(253) }),
+    label: (i) => `Setting up ${i.domain}...`,
+    run: async (i, ctx) => {
+      const s = await attachDomain(ctx.projectId, ctx.userId, i.domain);
+      const recs = s.records.map((r) => `${r.type}  name: ${r.name}  value: ${r.value}`).join("\n");
+      return `Domain ${s.domain} added. ${s.note ?? ""}\nDNS records to set at the registrar:\n${recs}\nStatus: ${s.configured && s.verified ? "working" : "waiting for DNS"}. Use check_domain later to re-check.`;
+    },
+  }),
+  def({
+    name: "check_domain",
+    description: "Checks whether the project's custom domain is set up correctly (DNS and verification).",
+    schema: z.object({}),
+    label: () => "Checking the domain...",
+    run: async (_i, ctx) => {
+      const s = await checkDomain(ctx.projectId, ctx.userId);
+      return `${s.domain}: ${s.configured && s.verified ? "working" : "not ready"}. ${s.note ?? ""}\nExpected records:\n${s.records.map((r) => `${r.type}  ${r.name}  ${r.value}`).join("\n")}`;
+    },
+  }),
+  def({
+    name: "dns_lookup",
+    description: "Looks up the current DNS records of a domain (A, CNAME, TXT, NS) to see what is actually configured right now.",
+    schema: z.object({ domain: z.string().min(3).max(253) }),
+    label: (i) => `Looking up ${i.domain}...`,
+    run: async (i) => {
+      const d = i.domain.toLowerCase().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+      const out: string[] = [];
+      for (const type of ["A", "CNAME", "TXT", "NS"] as const) {
+        try {
+          const r = await dns.resolve(d, type);
+          const vals = (r as unknown[]).map((x) => (Array.isArray(x) ? x.join("") : String(x)));
+          if (vals.length) out.push(`${type}: ${vals.join(", ")}`);
+        } catch {
+          /* none */
+        }
+      }
+      return out.length ? out.join("\n") : `No DNS records found for ${d} (it may not be registered, or DNS hasn't spread yet).`;
+    },
+  }),
+];
+TOOLS.push(...HOSTING_TOOLS);
 
 export function toolByName(name: string): ToolDef | undefined {
   return TOOLS.find((t) => t.name === name);

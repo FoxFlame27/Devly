@@ -46,6 +46,8 @@ model User {
   unlimited      Boolean   @default(false)
   /// Encrypted GitHub personal access token (for push/pull)
   githubToken    String?
+  /// Encrypted Vercel token (for deploying projects to the user's own Vercel account)
+  vercelToken    String?
   unlimitedUntil DateTime?
   disabled       Boolean   @default(false)
   emailVerifiedAt DateTime?
@@ -103,6 +105,11 @@ model Project {
   githubBranch  String?   @default("main")
   githubLastSha String?
   githubSyncedAt DateTime?
+  /// Hosting on the user's Vercel account
+  vercelProjectName String?
+  vercelUrl     String?
+  customDomain  String?
+  deployedAt    DateTime?
   publishedAt   DateTime?
   lastOpenedAt  DateTime  @default(now())
   createdAt     DateTime  @default(now())
