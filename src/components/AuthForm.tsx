@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
 import { friendlyOtpError, getSupabase, signInWithGoogle, supabaseConfigured } from "@/lib/client/supabase";
-import { Button, ErrorText, Field, inputClass, Logo } from "./ui";
+import { Button, ErrorText, Field, inputClass } from "./ui";
 
 type Verify = { provider?: "supabase"; challengeId?: string; email: string; masked?: string; devCode?: string; devReason?: string };
 
@@ -24,6 +24,10 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/projects";
+
+  useEffect(() => {
+    if (params.get("error") === "google") setError("Google sign-in didn't complete. Please try again.");
+  }, [params]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -108,7 +112,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <Logo className="mb-8" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/devly-logo.png" alt="Devly" className="mb-8 h-20 w-auto rounded-2xl bg-[#1f1e1b] px-6 py-2" />
       {verify ? (
         <form onSubmit={submitCode} className="w-full max-w-sm space-y-4 rounded-2xl border border-line bg-surface p-6">
           <h1 className="text-lg font-semibold">Check your email</h1>

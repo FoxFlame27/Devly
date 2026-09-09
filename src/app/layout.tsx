@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { OAuthHashHandler } from "@/components/OAuthHashHandler";
 
 export const metadata: Metadata = {
   title: "Devly",
@@ -18,7 +19,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <OAuthHashHandler />
+        {children}
+      </body>
     </html>
   );
 }

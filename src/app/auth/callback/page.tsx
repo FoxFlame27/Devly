@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { api } from "@/lib/client/api";
-import { Logo, Spinner } from "@/components/ui";
+import { Spinner } from "@/components/ui";
 
 /** Landing page after Google sign-in: turns Supabase's token into a Devly session. */
 function Callback() {
@@ -33,7 +33,8 @@ function Callback() {
   }, [params, router]);
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4">
-      <Logo />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/devly-logo.png" alt="Devly" className="h-20 w-auto rounded-2xl bg-[#1f1e1b] px-6 py-2" />
       {error ? (
         <div className="max-w-sm text-center">
           <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
