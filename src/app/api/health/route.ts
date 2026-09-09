@@ -24,7 +24,7 @@ export async function GET() {
   };
   for (const [name, schema] of Object.entries(rules)) {
     const v = effective[name];
-    if (v === undefined || v === "") problems.push(`${name} is missing`);
+    if (v === undefined || v === "") problems.push(`${name} is ${process.env[name] !== undefined ? "set but empty" : "missing"}`);
     else if (!schema.safeParse(v).success) problems.push(`${name} is set but not valid (${hint(name)})`);
   }
   let database: string = "not checked";
@@ -44,7 +44,7 @@ export async function GET() {
     gemini: !!process.env.GEMINI_API_KEY,
     meshy: !!process.env.MESHY_API_KEY,
     resend: !!process.env.RESEND_API_KEY,
-    supabaseOtp: !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    supabaseOtp: !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   };
   const detected = Object.keys(process.env).filter((k) => /^(POSTGRES_|SUPABASE_|NEXT_PUBLIC_SUPABASE_|DATABASE_|VERCEL_(ENV|URL|PROJECT_PRODUCTION_URL)$)/.test(k)).sort();
   const ok = problems.length === 0 && database.startsWith("ok");

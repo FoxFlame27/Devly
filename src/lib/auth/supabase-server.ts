@@ -1,8 +1,12 @@
 import "server-only";
 import { HttpError } from "../http";
 
+function publishableKey(): string | undefined {
+  return process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+}
+
 export function supabaseServerConfigured(): boolean {
-  return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!publishableKey();
 }
 
 /**
@@ -11,7 +15,7 @@ export function supabaseServerConfigured(): boolean {
  */
 export async function verifySupabaseToken(accessToken: string): Promise<{ email: string; supabaseId: string }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const key = publishableKey();
   if (!url || !key) throw new HttpError(500, "Email verification isn't configured.");
   if (!/^[A-Za-z0-9\-_.]{20,4096}$/.test(accessToken)) throw new HttpError(400, "Invalid token.");
   const res = await fetch(`${url.replace(/\/$/, "")}/auth/v1/user`, { headers: { apikey: key, Authorization: `Bearer ${accessToken}` }, cache: "no-store" });

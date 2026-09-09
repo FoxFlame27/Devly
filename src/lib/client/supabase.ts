@@ -7,13 +7,17 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
  */
 let client: SupabaseClient | null = null;
 
+// Both names must appear literally so Next.js can inline them into the browser bundle.
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 export function supabaseConfigured(): boolean {
-  return !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  return !!SUPABASE_URL && !!SUPABASE_KEY;
 }
 
 export function getSupabase(): SupabaseClient {
   if (!client) {
-    client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+    client = createClient(SUPABASE_URL!, SUPABASE_KEY!, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     });
   }
