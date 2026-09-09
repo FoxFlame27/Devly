@@ -45,7 +45,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ slug: st
     if (!real.startsWith((await fsp.realpath(root)) + path.sep)) return new Response("Not found", { status: 404 });
     const data = await fsp.readFile(target);
     const type = TYPES[path.extname(target).toLowerCase()] ?? "application/octet-stream";
-    return new Response(data, {
+    // Node's Buffer is not a valid BodyInit for the web Response type on every toolchain; hand over a plain byte view.
+    return new Response(new Uint8Array(data.buffer, data.byteOffset, data.byteLength), {
       headers: { "Content-Type": type, "Cache-Control": type.startsWith("text/html") ? "no-cache" : "public, max-age=3600", "X-Content-Type-Options": "nosniff" },
     });
   } catch {
