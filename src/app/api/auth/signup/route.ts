@@ -18,8 +18,14 @@ export const POST = handler(async (req) => {
     return json({ verify: { provider: "supabase", email: user.email, masked: maskEmail(user.email) } }, { status: 201 });
   }
   if (emailVerificationEnabled()) {
-    const ch = await startChallenge(user);
-    return json({ verify: { challengeId: ch.challengeId, email: maskEmail(user.email), devCode: ch.devCode } }, { status: 201 });
+    try {
+      const ch = await startChallenge(user);
+      return json({ verify: { challengeId: ch.challengeId, email: maskEmail(user.email), devCode: ch.devCode } }, { status: 201 });
+    } catch (e) {
+      // The account can't be verified yet: remove it so the person can simply try again.
+      await db.user.delete({ where: { id: user.id } }).catch(() => {});
+      throw e;
+    }
   }
   await createSession(user.id, req.headers.get("user-agent"));
   return json({ user: toSafeUser(user) }, { status: 201 });

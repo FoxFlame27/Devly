@@ -28,7 +28,15 @@ export async function startChallenge(user: { id: string; email: string; name: st
     });
   } catch (e) {
     console.error("[email] send failed", e);
-    throw new HttpError(502, "We couldn't send the code to that email address right now. Please try again in a moment.", "email_failed");
+    const detail = e instanceof Error ? e.message : String(e);
+    const testMode = /only send testing emails|verify a domain/i.test(detail);
+    const dev = process.env.NODE_ENV !== "production";
+    const msg = testMode
+      ? dev
+        ? "Email is in test mode: Resend only delivers to the account owner's address until a domain is verified in Resend (or Supabase OTP is configured)."
+        : "Sign-ups are temporarily limited while email delivery is being set up. Please try again later."
+      : "We couldn't send the code to that email address right now. Please try again in a moment.";
+    throw new HttpError(502, msg, "email_failed");
   }
   return { challengeId: ch.id, ...(provider.name === "console" && process.env.NODE_ENV !== "production" ? { devCode: code } : {}) };
 }
