@@ -51,9 +51,20 @@ export async function GET() {
     resend: !!process.env.RESEND_API_KEY,
     supabaseOtp: !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
   };
+  let storage = "not checked";
+  try {
+    const { dataDir } = await import("@/lib/paths");
+    const fs = await import("node:fs");
+    const dir = dataDir();
+    fs.writeFileSync(`${dir}/.write-test`, "ok");
+    fs.rmSync(`${dir}/.write-test`, { force: true });
+    storage = `writable (${dir})`;
+  } catch (e) {
+    storage = `NOT writable: ${e instanceof Error ? e.message.split("\n")[0].slice(0, 120) : String(e)}`;
+  }
   const detected = Object.keys(process.env).filter((k) => /^(POSTGRES_|SUPABASE_|NEXT_PUBLIC_SUPABASE_|DATABASE_|VERCEL_(ENV|URL|PROJECT_PRODUCTION_URL)$)/.test(k)).sort();
   const ok = problems.length === 0 && database.startsWith("ok");
-  return NextResponse.json({ ok, problems, database, providers, detectedVariables: detected, node: process.version }, { status: ok ? 200 : 503 });
+  return NextResponse.json({ ok, problems, database, storage, providers, detectedVariables: detected, node: process.version }, { status: ok ? 200 : 503 });
 }
 
 function hint(name: string): string {

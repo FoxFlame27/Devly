@@ -1,4 +1,5 @@
 import "server-only";
+import os from "node:os";
 import path from "node:path";
 import fs from "node:fs";
 import { env } from "./env";
@@ -7,7 +8,9 @@ import { env } from "./env";
 export const APP_ROOT = process.cwd();
 
 export function dataDir(): string {
-  const d = env().DATA_DIR ? path.resolve(env().DATA_DIR!) : path.join(APP_ROOT, ".data");
+  // Serverless hosts (Vercel, Lambda) only allow writes under the OS temp dir; the database is the source of truth anyway.
+  const serverless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+  const d = env().DATA_DIR ? path.resolve(env().DATA_DIR!) : serverless ? path.join(os.tmpdir(), "devly-data") : path.join(APP_ROOT, ".data");
   fs.mkdirSync(d, { recursive: true });
   return d;
 }
