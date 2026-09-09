@@ -38,7 +38,10 @@ export function errorResponse(err: unknown) {
     return NextResponse.json({ error: "The database isn't reachable right now. The site owner needs to check the DATABASE_URL setting.", code: "database_unavailable" }, { status: 503 });
   }
   console.error("[api]", err);
-  return NextResponse.json({ error: "Something went wrong on our side." }, { status: 500 });
+  // Kind of failure only (no message/stack): enough to diagnose deployments without leaking details.
+  const kind = err instanceof Error ? `${err.constructor.name}${code ? `:${code}` : ""}` : typeof err;
+  const hint = err instanceof Error && /Invalid platform configuration/.test(err.message) ? err.message.replace(/Invalid platform configuration: /, "").replace(/: .*?(;|$)/g, "$1") : undefined;
+  return NextResponse.json({ error: "Something went wrong on our side.", kind, ...(hint ? { hint } : {}) }, { status: 500 });
 }
 
 /** Wraps a route handler with uniform error handling. */
