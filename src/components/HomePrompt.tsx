@@ -120,7 +120,7 @@ export function HomePrompt({ user }: { user: SafeUser | null }) {
   return (
     <form onSubmit={submit} className="mx-auto w-full max-w-2xl px-4">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/devly-logo.png" alt="Devly" className="mx-auto mb-4 h-36 w-auto rounded-3xl bg-[#1f1e1b] px-8 py-3 sm:h-44" />
+      <img src="/devly-logo.png" alt="Devly" className="mx-auto mb-2 h-24 w-auto rounded-2xl bg-[#1f1e1b] px-6 py-2 sm:h-28" />
       <h1 className="font-display text-center text-[40px] font-normal leading-tight tracking-[-0.01em] sm:text-[48px]">What will you build?</h1>
       <p className="mt-3 text-center text-sm text-muted">Turn ideas into apps in minutes — no coding needed</p>
 
