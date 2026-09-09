@@ -12,6 +12,7 @@ export function OAuthHashHandler() {
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash.includes("access_token=")) return;
+    if (window.location.pathname.startsWith("/auth/callback")) return; // that page handles it itself
     const params = new URLSearchParams(hash.replace(/^#/, ""));
     const accessToken = params.get("access_token");
     if (!accessToken) return;
