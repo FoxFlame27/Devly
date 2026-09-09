@@ -7,6 +7,7 @@ import { Button, Spinner } from "../ui";
 import { ModelPicker } from "./ModelPicker";
 import { ArrowUp, Square } from "lucide-react";
 import { findUrls, LinkChip, TextWithLinks } from "../LinkChip";
+import { useAutosize } from "@/lib/client/useAutosize";
 
 type Props = {
   messages: ChatMessage[];
@@ -38,6 +39,7 @@ export function Chat(p: Props) {
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const stickToBottom = useRef(true);
+  useAutosize(inputRef, text, 320);
 
   useEffect(() => {
     const el = listRef.current;
@@ -146,8 +148,8 @@ export function Chat(p: Props) {
               }
             }}
             placeholder={p.running ? "Type the next thing to do. It runs when this one finishes..." : p.messages.length ? "What should I change?" : "Describe what you want to build..."}
-            rows={3}
-            className="w-full resize-none bg-transparent px-4 pt-3 text-sm outline-none placeholder:text-stone-400"
+            rows={2}
+            className="block w-full resize-none bg-transparent px-4 pt-3 text-[15px] leading-relaxed outline-none placeholder:text-stone-400 scroll-thin"
           />
           {findUrls(text).length ? (
             <div className="flex flex-wrap gap-1.5 px-3 pb-2">
@@ -183,7 +185,7 @@ function Message({ m, isLast, running, status, onRetry, advanced }: { m: ChatMes
   if (m.role === "USER") {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-stone-200 px-4 py-2.5 text-[15px] text-ink">
+        <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl bg-stone-200 px-4 py-2.5 text-[15px] text-ink">
           <TextWithLinks text={m.content} />
         </div>
       </div>
