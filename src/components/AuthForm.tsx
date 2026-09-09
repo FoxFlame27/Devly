@@ -155,6 +155,13 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           <Field label="Password" hint={mode === "signup" ? "At least 8 characters" : undefined}>
             <input className={inputClass} type="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} required minLength={mode === "signup" ? 8 : 1} value={password} onChange={(e) => setPassword(e.target.value)} />
           </Field>
+          {mode === "login" ? (
+            <p className="-mt-2 text-right text-xs">
+              <Link className="text-muted hover:text-ink" href="/forgot">
+                Forgot password?
+              </Link>
+            </p>
+          ) : null}
           <ErrorText>{error}</ErrorText>
           <Button type="submit" variant="primary" size="lg" className="w-full" loading={busy}>
             {mode === "signup" ? "Sign up" : "Log in"}
