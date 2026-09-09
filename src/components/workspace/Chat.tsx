@@ -5,10 +5,23 @@ import remarkGfm from "remark-gfm";
 import type { ChatMessage, ConversationSummary, EffortChoice, EffortOption, ModelOption } from "@/lib/client/types";
 import { Button, Spinner } from "../ui";
 import { ModelPicker } from "./ModelPicker";
-import { ArrowUp, Square } from "lucide-react";
+import { ArrowUp, Square, Trash2 } from "lucide-react";
 import { findUrls, LinkChip, TextWithLinks } from "../LinkChip";
 import { useAutosize } from "@/lib/client/useAutosize";
 import { ModelCard } from "./ModelCard";
+
+function questionOf(m: ChatMessage): { question: string; options: string[] } | null {
+  if (m.question) return m.question;
+  const a = (m.activity ?? []).find((x) => x.name === "ask_user");
+  if (!a) return null;
+  let options: string[] = [];
+  try {
+    options = JSON.parse(a.summary ?? "[]");
+  } catch {
+    options = [];
+  }
+  return { question: a.detail ?? "", options };
+}
 
 type Props = {
   messages: ChatMessage[];
@@ -90,7 +103,7 @@ export function Chat(p: Props) {
                       {c.title}
                     </button>
                     <button onClick={() => p.onDeleteConversation(c.id)} className="rounded px-1.5 py-1 text-xs text-muted opacity-0 hover:text-red-600 group-hover:opacity-100" title="Delete conversation">
-                      ✕
+                      <Trash2 size={13} />
                     </button>
                   </div>
                 ))}
@@ -218,6 +231,19 @@ function Message({ m, isLast, running, status, onRetry, advanced, projectId, onS
           <span>{status ?? "Working..."}</span>
         </div>
       ) : null}
+      {(() => {
+        const q = questionOf(m);
+        if (!q || !q.options.length) return null;
+        return (
+          <div className="flex flex-wrap gap-2">
+            {q.options.map((o) => (
+              <button key={o} disabled={!isLast || running} onClick={() => onSend(o)} className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm hover:border-stone-400 disabled:opacity-50">
+                {o}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
       {models.map((mm) => (
         <ModelCard key={mm.file} projectId={projectId} file={mm.file} name={mm.file.replace(/^public\/models\//, "").replace(/\.glb$/, "")} onTexture={onSend} busy={running} />
       ))}

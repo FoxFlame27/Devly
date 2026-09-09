@@ -21,6 +21,8 @@ export type ChatMessage = {
   changes?: FileChanges | null;
   status?: "COMPLETE" | "STOPPED" | "ERROR";
   createdAt?: string;
+  /** A question the AI asked, with clickable options */
+  question?: { question: string; options: string[] } | null;
   /** client-only */
   pending?: boolean;
   error?: string | null;

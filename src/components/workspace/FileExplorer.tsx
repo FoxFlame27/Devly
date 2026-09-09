@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/client/api";
 import type { TreeNode } from "@/lib/client/types";
+import { Trash2 } from "lucide-react";
 
 type Props = { projectId: string; selected: string | null; onSelect: (path: string) => void; refreshKey: number; onChanged: () => void };
 
@@ -88,7 +89,7 @@ export function FileExplorer({ projectId, selected, onSelect, refreshKey, onChan
               </>
             ) : null}
             <IconBtn title="Rename" onClick={() => rename(n.path)}>✎</IconBtn>
-            <IconBtn title="Delete" onClick={() => remove(n.path)}>✕</IconBtn>
+            <IconBtn title="Delete" onClick={() => remove(n.path)}><Trash2 size={12} /></IconBtn>
           </span>
         </div>
         {n.type === "dir" && isOpen ? n.children?.map((c) => <Node key={c.path} n={c} depth={depth + 1} />) : null}

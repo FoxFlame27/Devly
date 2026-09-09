@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Y 5",
-  description: "Describe what you want. Y 5 builds it.",
+  title: "Devly",
+  description: "Describe what you want. Devly builds it.",
 };
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1 };

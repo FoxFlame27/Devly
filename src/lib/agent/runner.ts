@@ -158,12 +158,17 @@ export async function runAgent(input: RunInput): Promise<RunOutput> {
         }
         const item: ActivityItem = { id: tu.id, name: tu.name, label, detail: detailFor(tu.name, tu.input) };
         if ((tu.name === "generate_3d_model" || tu.name === "texture_3d_model") && typeof (tu.input as { name?: unknown })?.name === "string") item.detail = (tu.input as { name: string }).name;
+        if (tu.name === "ask_user") {
+          const q = tu.input as { question?: string; options?: string[] };
+          item.detail = q.question ?? "";
+          item.summary = JSON.stringify(q.options ?? []);
+        }
         activity.push(item);
         emit({ type: "tool_start", id: tu.id, name: tu.name, label, detail: item.detail });
         emit({ type: "status", text: label });
         const res = await executeTool(tu.name, tu.input, ctx);
         item.ok = res.ok;
-        item.summary = res.output.split("\n")[0].slice(0, 160);
+        if (tu.name !== "ask_user") item.summary = res.output.split("\n")[0].slice(0, 160);
         emit({ type: "tool_end", id: tu.id, name: tu.name, ok: res.ok, summary: item.summary });
         if (tu.name === "write_file" || tu.name === "edit_file" || tu.name === "delete_file" || tu.name === "run_command" || tu.name === "install_package") {
           emit({ type: "changes", changes: structuredClone(changes) });
@@ -172,6 +177,15 @@ export async function runAgent(input: RunInput): Promise<RunOutput> {
       }
       if (controller.signal.aborted) break;
       messages.push({ role: "user", content: results });
+      if (ctx.question) {
+        // The model asked something: show it, end the run, and wait for the user's reply.
+        const q = ctx.question;
+        const line = `${text.trim() ? "\n\n" : ""}${q.question}`;
+        text += line;
+        emit({ type: "text", delta: line });
+        emit({ type: "question", question: q.question, options: q.options });
+        break;
+      }
     }
   } catch (e) {
     if (controller.signal.aborted) {

@@ -9,6 +9,7 @@ export type AgentEvent =
   | { type: "tool_end"; id: string; name: string; ok: boolean; summary: string }
   | { type: "changes"; changes: FileChanges }
   | { type: "preview"; status: string; url: string | null }
+  | { type: "question"; question: string; options: string[] }
   | { type: "done"; messageId: string; changes: FileChanges; promptsRemaining: number | null; stopped: boolean }
   | { type: "error"; message: string; retryable: boolean };
 

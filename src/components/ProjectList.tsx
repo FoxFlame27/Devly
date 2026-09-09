@@ -6,6 +6,7 @@ import { api } from "@/lib/client/api";
 import { TimeAgo } from "./TimeAgo";
 import type { ProjectSummary } from "@/lib/client/types";
 import { Button, Modal } from "./ui";
+import { Trash2 } from "lucide-react";
 
 export function ProjectList({ projects: initial }: { projects: ProjectSummary[] }) {
   const [projects, setProjects] = useState(initial);
@@ -51,8 +52,8 @@ export function ProjectList({ projects: initial }: { projects: ProjectSummary[] 
                   {p.publishedAt ? " · Published" : ""}
                 </div>
               </Link>
-              <button onClick={() => setConfirm(p)} className="rounded-lg px-2 py-1 text-xs text-muted opacity-0 hover:bg-red-50 hover:text-red-700 group-hover:opacity-100 focus:opacity-100">
-                Delete
+              <button onClick={() => setConfirm(p)} className="grid size-8 place-items-center rounded-lg text-muted opacity-0 hover:bg-red-50 hover:text-red-700 group-hover:opacity-100 focus:opacity-100" title="Delete project" aria-label="Delete project">
+                <Trash2 size={15} />
               </button>
             </li>
           ))}

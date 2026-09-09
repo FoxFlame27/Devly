@@ -244,7 +244,7 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
     <div className="flex h-dvh flex-col bg-bg">
       <header className="flex h-12 shrink-0 items-center justify-between gap-2 px-3">
         <div className="flex min-w-0 items-center gap-2">
-          <Link href="/" className="mr-1 shrink-0" aria-label="Y 5 home"><Mark size={26} /></Link>
+          <Link href="/" className="mr-1 shrink-0" aria-label="Devly home"><Mark size={26} /></Link>
           <Link href="/projects" className="rounded-lg px-2 py-1 text-sm text-muted hover:bg-stone-100 hover:text-ink" title="Back to projects">
             Projects
           </Link>

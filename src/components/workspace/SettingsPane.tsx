@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/client/api";
 import type { EffortChoice, EffortOption, ModelOption, ProjectDetail } from "@/lib/client/types";
 import { Button, ErrorText, Field, inputClass } from "../ui";
+import { Trash2 } from "lucide-react";
 
 type EnvRow = { key: string; preview: string; updatedAt: string };
 
@@ -244,7 +245,7 @@ export function SettingsPane(p: SettingsProps) {
             </div>
           ) : (
             <Button size="sm" variant="secondary" className="text-red-600" onClick={() => setConfirmDelete(true)}>
-              Delete project
+              <Trash2 size={14} /> Delete project
             </Button>
           )}
         </Section>

@@ -20,6 +20,8 @@ export type ToolContext = {
   fixing: boolean;
   /** Unlimited users can generate 3D models */
   unlimited: boolean;
+  /** Set when the model asked the user something; the run stops and waits for the answer */
+  question?: { question: string; options: string[] };
   status?: (text: string) => void;
   previewStatus?: (status: string, url: string | null) => void;
 };
@@ -244,6 +246,18 @@ export const TOOLS: ToolDef[] = [
     },
   }),
 ];
+
+const ASK_TOOL: ToolDef = def({
+  name: "ask_user",
+  description: "Asks the user a question and waits for their answer. Use it only when the request is genuinely ambiguous in a way that would produce very different results (for example: which of two directions, or a missing detail you cannot reasonably assume). Offer 2-4 short options when possible. The run ends after asking; continue when the user replies.",
+  schema: z.object({ question: z.string().min(3).max(500), options: z.array(z.string().min(1).max(80)).max(4).optional() }),
+  label: () => "Asking you a question...",
+  run: async (i, ctx) => {
+    ctx.question = { question: i.question, options: i.options ?? [] };
+    return "Question sent to the user. Stop here and wait for their reply.";
+  },
+});
+TOOLS.push(ASK_TOOL);
 
 const MODEL_TOOLS: ToolDef[] = [
   def({

@@ -40,9 +40,9 @@ export function Spinner({ className = "size-5" }: { className?: string }) {
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <Link href="/" className={`inline-flex items-center gap-2 ${className}`} aria-label="Y 5 home">
+    <Link href="/" className={`inline-flex items-center gap-2 ${className}`} aria-label="Devly home">
       <Mark size={24} />
-      <span className="text-[15px] font-semibold tracking-tight">Y5</span>
+      <span className="font-display text-[17px] font-semibold tracking-tight">Devly</span>
     </Link>
   );
 }

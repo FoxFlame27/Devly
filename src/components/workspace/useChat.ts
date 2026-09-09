@@ -87,6 +87,9 @@ export function useChat(projectId: string, handlers: Handlers) {
               case "preview":
                 h.current.onPreview(e.status, e.url);
                 break;
+              case "question":
+                update((m) => ({ ...m, question: { question: e.question, options: e.options } }));
+                break;
               case "error":
                 update((m) => ({ ...m, error: e.message, status: "ERROR" }));
                 break;
