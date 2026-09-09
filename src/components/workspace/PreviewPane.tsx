@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/client/api";
 import type { PreviewInfo } from "@/lib/client/types";
 import { Button, Spinner } from "../ui";
-import { RefreshCw, ExternalLink, Globe, Wrench, RotateCcw } from "lucide-react";
 
 type Props = {
   projectId: string;
@@ -58,13 +57,13 @@ export function PreviewPane(p: Props) {
         </div>
         <div className="flex items-center gap-1">
           <Button size="sm" variant="ghost" onClick={p.onRefresh} disabled={!src} title="Reload the preview">
-            <RefreshCw size={14} /> Refresh
+            Refresh
           </Button>
           <Button size="sm" variant="ghost" onClick={() => src && window.open(p.info.url!, "_blank")} disabled={!src} title="Open in a new tab">
-            <ExternalLink size={14} /> Open
+            Open
           </Button>
           <Button size="sm" variant="primary" onClick={p.onPublish} loading={p.publishing} disabled={p.aiBusy} title="Put your project online">
-            <Globe size={14} /> Publish
+            Publish
           </Button>
         </div>
       </div>
@@ -88,7 +87,7 @@ export function PreviewPane(p: Props) {
               <div className="flex gap-2">
                 {failed ? (
                   <Button size="sm" variant="secondary" onClick={p.onRestart}>
-                    <RotateCcw size={14} /> Restart
+                    Restart
                   </Button>
                 ) : null}
                 {p.advanced ? (
@@ -97,7 +96,7 @@ export function PreviewPane(p: Props) {
                   </Button>
                 ) : null}
                 <Button size="sm" variant="primary" onClick={() => p.onAskFix(problem)} disabled={p.aiBusy}>
-                  <Wrench size={14} /> Ask AI to fix
+                  Ask AI to fix
                 </Button>
               </div>
             </div>

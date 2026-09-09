@@ -3,7 +3,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { Clock, FolderOpen, LogOut, Menu, Plus, Shield, Sparkles, X } from "lucide-react";
-import { api, timeAgo } from "@/lib/client/api";
+import { api } from "@/lib/client/api";
+import { TimeAgo } from "./TimeAgo";
 import type { ProjectSummary, SafeUser } from "@/lib/client/types";
 import { Button, Logo } from "./ui";
 import { PromptCounter } from "./PromptCounter";
@@ -82,7 +83,7 @@ export function AppShell({ user: initialUser, projects, children, active = "home
             {projects.slice(0, 12).map((p) => (
               <Link key={p.id} href={`/p/${p.id}`} onClick={() => setMobileOpen(false)} className="block rounded-lg px-2.5 py-1.5 hover:bg-stone-100">
                 <div className="truncate text-sm">{p.name}</div>
-                <div className="text-[11px] text-muted">{timeAgo(p.updatedAt)}</div>
+                <div className="text-[11px] text-muted"><TimeAgo date={p.updatedAt} /></div>
               </Link>
             ))}
           </>

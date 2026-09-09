@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { api, timeAgo } from "@/lib/client/api";
+import { api } from "@/lib/client/api";
+import { TimeAgo } from "./TimeAgo";
 import type { ProjectSummary } from "@/lib/client/types";
 import { Button, Modal } from "./ui";
 
@@ -46,7 +47,7 @@ export function ProjectList({ projects: initial }: { projects: ProjectSummary[] 
               <Link href={`/p/${p.id}`} className="min-w-0 flex-1">
                 <div className="truncate font-medium">{p.name}</div>
                 <div className="text-xs text-muted">
-                  Edited {timeAgo(p.updatedAt)}
+                  Edited <TimeAgo date={p.updatedAt} />
                   {p.publishedAt ? " · Published" : ""}
                 </div>
               </Link>

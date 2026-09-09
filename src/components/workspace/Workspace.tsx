@@ -6,7 +6,7 @@ import type { EffortChoice, EffortOption, ModelOption, ProjectDetail, SafeUser }
 import { Button } from "../ui";
 import { Mark } from "../ui/Mark";
 import { ThemePicker } from "../ThemePicker";
-import { ChevronLeft, History as HistoryIcon, Settings as SettingsIcon, MessageSquare, Eye, FolderOpen, Check, Loader2 } from "lucide-react";
+import { MessageSquare, Eye, FolderOpen } from "lucide-react";
 import { PromptCounter } from "../PromptCounter";
 import { Chat } from "./Chat";
 import { PreviewPane } from "./PreviewPane";
@@ -196,24 +196,21 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
       <header className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-line bg-surface px-3">
         <div className="flex min-w-0 items-center gap-2">
           <Link href="/" className="mr-1 shrink-0" aria-label="Y 5 home"><Mark size={26} /></Link>
-          <Link href="/projects" className="flex items-center gap-1 rounded-lg px-2 py-1 text-sm text-muted hover:bg-stone-100 hover:text-ink" title="Back to projects">
-            <ChevronLeft size={16} /> Projects
+          <Link href="/projects" className="rounded-lg px-2 py-1 text-sm text-muted hover:bg-stone-100 hover:text-ink" title="Back to projects">
+            Projects
           </Link>
           <button onClick={() => setSettings(true)} className="min-w-0 truncate rounded-lg px-2 py-1 text-sm font-medium hover:bg-stone-100" title="Project settings">
             {project.name}
           </button>
-          <span className="hidden items-center gap-1 text-xs text-muted sm:flex">
-            {saveState === "saved" ? <Check size={13} /> : <Loader2 size={13} className="animate-spin" />}
-            {saveState === "saved" ? "Saved" : saveState === "saving" ? "Saving..." : "Working..."}
-          </span>
+          <span className="hidden text-xs text-muted sm:inline">{saveState === "saved" ? "Saved" : saveState === "saving" ? "Saving..." : "Working..."}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="hidden items-center gap-1 md:flex">
             <Button size="sm" variant="ghost" onClick={() => setHistory(true)}>
-              <HistoryIcon size={15} /> History
+              History
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setSettings(true)}>
-              <SettingsIcon size={15} /> Settings
+              Settings
             </Button>
           </div>
           <ThemePicker />

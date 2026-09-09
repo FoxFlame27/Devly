@@ -48,7 +48,10 @@ export function useChat(projectId: string, handlers: Handlers) {
   const consume = useCallback(
     async (url: string, body: unknown | undefined, draftId: string, controller: AbortController) => {
       let currentId = draftId;
-      const update = (fn: (m: ChatMessage) => ChatMessage) => setState((s) => ({ ...s, messages: s.messages.map((m) => (m.id === currentId ? fn(m) : m)) }));
+      const update = (fn: (m: ChatMessage) => ChatMessage) => {
+        const id = currentId;
+        setState((s) => ({ ...s, messages: s.messages.map((m) => (m.id === id ? fn(m) : m)) }));
+      };
       let stoppedByUser = false;
       try {
         await streamSse<AgentEvent>(

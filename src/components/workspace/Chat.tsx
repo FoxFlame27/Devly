@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import type { ChatMessage, ConversationSummary, EffortChoice, EffortOption, ModelOption } from "@/lib/client/types";
 import { Button, Spinner } from "../ui";
 import { ModelPicker } from "./ModelPicker";
-import { ArrowUp, Square, Plus, Trash2, ChevronDown, RotateCcw } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 
 type Props = {
   messages: ChatMessage[];
@@ -57,7 +57,7 @@ export function Chat(p: Props) {
         <div className="relative min-w-0">
           <button onClick={() => setConvOpen((o) => !o)} className="flex max-w-[220px] items-center gap-1 truncate rounded-lg px-2 py-1 text-sm hover:bg-stone-100">
             <span className="truncate">{current?.title ?? "New conversation"}</span>
-            <ChevronDown size={14} className="text-muted" />
+            <span className="text-muted">▾</span>
           </button>
           {convOpen ? (
             <div className="absolute left-0 top-9 z-30 w-72 rounded-xl border border-line bg-surface p-1 shadow-lg" onMouseLeave={() => setConvOpen(false)}>
@@ -66,9 +66,9 @@ export function Chat(p: Props) {
                   p.onNewConversation();
                   setConvOpen(false);
                 }}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-stone-100"
+                className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium hover:bg-stone-100"
               >
-                <Plus size={14} /> New conversation
+                + New conversation
               </button>
               <div className="max-h-64 overflow-y-auto scroll-thin">
                 {p.conversations.map((c) => (
@@ -83,7 +83,7 @@ export function Chat(p: Props) {
                       {c.title}
                     </button>
                     <button onClick={() => p.onDeleteConversation(c.id)} className="rounded px-1.5 py-1 text-xs text-muted opacity-0 hover:text-red-600 group-hover:opacity-100" title="Delete conversation">
-                      <Trash2 size={13} />
+                      ✕
                     </button>
                   </div>
                 ))}
@@ -180,7 +180,7 @@ function Message({ m, isLast, running, status, onRetry, advanced }: { m: ChatMes
         <div className="flex items-center justify-between gap-3 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">
           <span>{m.error}</span>
           <Button size="sm" variant="secondary" onClick={onRetry}>
-            <RotateCcw size={13} /> Retry
+            Retry
           </Button>
         </div>
       ) : null}

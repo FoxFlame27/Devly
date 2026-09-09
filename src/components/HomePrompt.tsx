@@ -5,7 +5,6 @@ import { api } from "@/lib/client/api";
 import type { SafeUser } from "@/lib/client/types";
 import { Button, ErrorText } from "./ui";
 import { IdeaChips } from "./HomeExtras";
-import { ArrowUp } from "lucide-react";
 
 const PENDING_KEY = "bb.pendingPrompt";
 
@@ -99,7 +98,7 @@ export function HomePrompt({ user }: { user: SafeUser | null }) {
         />
         <div className="flex items-center justify-end gap-3 px-3 pb-3">
           <Button type="submit" variant="primary" size="lg" loading={busy}>
-            {busy ? "Creating your project" : "Build"} {busy ? null : <ArrowUp size={16} />}
+            {busy ? "Creating your project" : "Build"}
           </Button>
         </div>
       </div>
