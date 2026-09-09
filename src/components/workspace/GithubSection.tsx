@@ -25,7 +25,8 @@ export function GithubSection({ projectId, gh, onFilesChanged }: { projectId: st
     if (a.connected) api<{ repos: { full_name: string; private: boolean }[] }>("/api/github/repos").then((r) => setRepos(r.repos)).catch(() => setRepos([]));
   }
   useEffect(() => {
-    loadAccount();
+    const t = setTimeout(() => void loadAccount(), 0);
+    return () => clearTimeout(t);
   }, []);
 
   async function saveToken() {
