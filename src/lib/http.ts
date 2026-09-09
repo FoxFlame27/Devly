@@ -26,6 +26,13 @@ export function errorResponse(err: unknown) {
     const msg = err.issues.map((i) => `${i.path.join(".") || "input"}: ${i.message}`).join("; ");
     return NextResponse.json({ error: msg, code: "validation" }, { status: 400 });
   }
+  // Database not reachable / misconfigured: say so instead of a bare 500 (details stay in the server log).
+  const name = (err as { constructor?: { name?: string } })?.constructor?.name ?? "";
+  const code = (err as { code?: string })?.code ?? "";
+  if (name === "PrismaClientInitializationError" || /^P10(00|01|02|17)$/.test(code)) {
+    console.error("[api] database unavailable", err);
+    return NextResponse.json({ error: "The database isn't reachable right now. The site owner needs to check the DATABASE_URL setting.", code: "database_unavailable" }, { status: 503 });
+  }
   console.error("[api]", err);
   return NextResponse.json({ error: "Something went wrong on our side." }, { status: 500 });
 }
