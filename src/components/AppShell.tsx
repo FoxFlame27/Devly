@@ -105,9 +105,9 @@ export function AppShell({ user: initialUser, projects, children, active = "home
         </div>
         {user ? (
           <div className="mt-2 flex items-center justify-between gap-2">
-            <span className="truncate text-xs text-muted" title={user.email}>
+            <Link href="/account" onClick={() => setMobileOpen(false)} className="min-w-0 truncate text-xs text-muted hover:text-ink hover:underline" title="Account settings (change password)">
               {user.email}
-            </span>
+            </Link>
             <button onClick={logout} className="flex shrink-0 items-center gap-1 text-xs text-muted hover:text-ink" title="Log out">
               <LogOut size={13} /> Log out
             </button>
