@@ -6,6 +6,7 @@ import { api } from "@/lib/client/api";
 import { friendlyOtpError, getSupabase, signInWithGoogle, supabaseConfigured } from "@/lib/client/supabase";
 import { Button, ErrorText, Field, inputClass, Spinner } from "./ui";
 import { setNavLoading } from "./NavProgress";
+import { afterLoginPath } from "@/lib/client/lastProject";
 import { CheckCircle2 } from "lucide-react";
 
 type Verify = { provider?: "supabase"; challengeId?: string; email: string; masked?: string; devCode?: string; devReason?: string };
@@ -26,7 +27,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const googleAvailable = supabaseConfigured();
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/projects";
+  const next = params.get("next") || (typeof window !== "undefined" ? afterLoginPath() : "/projects");
 
   useEffect(() => {
     if (cooldown <= 0) return;

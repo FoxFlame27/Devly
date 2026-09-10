@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/client/api";
+import { afterLoginPath } from "@/lib/client/lastProject";
 
 /**
  * Google sign-in via Supabase comes back with the tokens in the URL hash. If Supabase sends the person to the
@@ -19,7 +20,7 @@ export function OAuthHashHandler() {
     window.history.replaceState(null, "", window.location.pathname + window.location.search);
     api("/api/auth/supabase", { method: "POST", json: { accessToken } })
       .then(() => {
-        router.replace("/projects");
+        router.replace(afterLoginPath());
         router.refresh();
       })
       .catch(() => router.replace("/login?error=google"));

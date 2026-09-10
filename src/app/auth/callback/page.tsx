@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { api } from "@/lib/client/api";
 import { Spinner } from "@/components/ui";
 import { setNavLoading } from "@/components/NavProgress";
+import { afterLoginPath } from "@/lib/client/lastProject";
 
 /** Landing page after Google sign-in: turns Supabase's token into a Devly session. */
 function Callback() {
@@ -22,7 +23,7 @@ function Callback() {
       }
       try {
         await api("/api/auth/supabase", { method: "POST", json: { accessToken } });
-        const next = params.get("next") || "/projects";
+        const next = params.get("next") || afterLoginPath();
         window.history.replaceState(null, "", window.location.pathname);
         setNavLoading(true);
         router.replace(next.startsWith("/") ? next : "/projects");

@@ -24,6 +24,8 @@ export function useChat(projectId: string, handlers: Handlers) {
   const [state, setState] = useState<ChatState>({ conversations: [], conversationId: null, messages: [], running: false, status: null, error: null, lastPrompt: null, queue: [] });
   const queueRef = useRef<ChatState["queue"]>([]);
   const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Set when the person explicitly started a new chat; otherwise messages go to the latest conversation. */
+  const wantsNewChat = useRef(false);
   const sendRef = useRef<(text: string, model?: string | null, effort?: string | null, attachments?: Attachment[]) => Promise<void>>(async () => {});
   const runId = useRef<string | null>(null);
   const abort = useRef<AbortController | null>(null);
@@ -189,14 +191,16 @@ export function useChat(projectId: string, handlers: Handlers) {
         setState((s) => ({ ...s, queue: [...queueRef.current] }));
         return;
       }
+      // Resume the most recent conversation unless "New chat" was chosen.
+      const conversationId = state.conversationId ?? (!wantsNewChat.current && state.conversations[0] ? state.conversations[0].id : null);
       const userMsg: ChatMessage = { id: `local-${Date.now()}`, role: "USER", content: trimmed, attachments: attachments?.length ? attachments : undefined };
       const draft: ChatMessage = { id: `draft-${Date.now()}`, role: "ASSISTANT", content: "", activity: [], pending: true };
       setState((s) => ({ ...s, messages: [...s.messages, userMsg, draft], running: true, status: "Thinking...", error: null, lastPrompt: trimmed }));
       const controller = new AbortController();
       abort.current = controller;
-      await consume(`/api/projects/${projectId}/chat`, { message: trimmed, conversationId: state.conversationId, model, effort, attachments: attachments?.length ? attachments : undefined }, draft.id, controller);
+      await consume(`/api/projects/${projectId}/chat`, { message: trimmed, conversationId, model, effort, attachments: attachments?.length ? attachments : undefined }, draft.id, controller);
     },
-    [projectId, state.conversationId, consume],
+    [projectId, state.conversationId, state.conversations, consume],
   );
 
   useEffect(() => {
@@ -221,6 +225,7 @@ export function useChat(projectId: string, handlers: Handlers) {
   }, [projectId]);
 
   const newConversation = useCallback(async () => {
+    wantsNewChat.current = true;
     setState((s) => ({ ...s, conversationId: null, messages: [], error: null }));
   }, []);
 

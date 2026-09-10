@@ -18,6 +18,7 @@ import { DataPane } from "./DataPane";
 import { AskPane } from "./AskPane";
 import { useGithub } from "@/lib/client/useGithub";
 import { useHosting } from "@/lib/client/useHosting";
+import { rememberLastProject } from "@/lib/client/lastProject";
 import { Rocket } from "lucide-react";
 import { GitBranch, Upload, Download } from "lucide-react";
 import { FileExplorer } from "./FileExplorer";
@@ -58,6 +59,9 @@ export function Workspace({ project: initialProject, user: initialUser, models, 
   const [saveState, setSaveState] = useState<"saved" | "saving" | "unsaved">("saved");
   const [history, setHistory] = useState(false);
   const github = useGithub(project.id);
+  useEffect(() => {
+    rememberLastProject(project.id, project.name);
+  }, [project.id, project.name]);
   const hosting = useHosting(project.id);
   const [limitOpen, setLimitOpen] = useState(false);
   const [publishing, setPublishing] = useState(false);

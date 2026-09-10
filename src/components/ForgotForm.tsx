@@ -6,6 +6,7 @@ import { api } from "@/lib/client/api";
 import { friendlyOtpError, getSupabase, supabaseConfigured } from "@/lib/client/supabase";
 import { Button, ErrorText, Field, inputClass, Spinner } from "./ui";
 import { setNavLoading } from "./NavProgress";
+import { afterLoginPath } from "@/lib/client/lastProject";
 import { CheckCircle2 } from "lucide-react";
 
 type Verify = { provider?: "supabase"; challengeId?: string; email: string; masked?: string; devCode?: string };
@@ -70,7 +71,7 @@ export function ForgotForm() {
       }
       setDone(true);
       setNavLoading(true);
-      router.push("/projects");
+      router.push(afterLoginPath());
       router.refresh();
     } catch (err) {
       setError((err as Error).message);

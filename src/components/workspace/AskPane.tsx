@@ -17,7 +17,22 @@ type Props = { projectId: string; models: ModelOption[]; context: { tab: string;
 export function AskPane({ projectId, models, context, onHandoff, builderBusy }: Props) {
   const preferred = models.find((m) => /^gemini/.test(m.id)) ?? models.find((m) => /mini|flash|haiku/.test(m.id)) ?? models[0];
   const [model, setModel] = useState(preferred?.id ?? "");
-  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const storeKey = `devly.ask.${projectId}`;
+  const [msgs, setMsgs] = useState<Msg[]>(() => {
+    try {
+      const raw = typeof window !== "undefined" ? sessionStorage.getItem(storeKey) : null;
+      return raw ? (JSON.parse(raw) as Msg[]) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(storeKey, JSON.stringify(msgs.slice(-40)));
+    } catch {
+      /* ignore */
+    }
+  }, [msgs, storeKey]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const list = useRef<HTMLDivElement>(null);
